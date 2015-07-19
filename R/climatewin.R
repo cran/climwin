@@ -1,263 +1,208 @@
-#'  Test for a climate window
+#'Test for a climate windows in data.
+#'
+#'Finds the time period when a biological variable is most strongly affected 
+#'by climate. Note that climate data and biological data should be loaded as 
+#'two seperate objects. Both objects should contain a date column to designate
+#'when the data were recorded (dd/mm/yyyy) and a response variable column.
+#'
+#'Note that climatewin allows you to test multiple possible parameters with the
+#'same code (e.g. func, stat, xvar). See examples for more detail.
+#'@param xvar A list object containing all climate variables of interest. 
+#'  Please specify the parent environment and variable name (e.g. climate$Temp).
+#'@param cdate The climate date variable (dd/mm/yyyy). Please specify the 
+#'  parent environment and variable name (e.g. climate$Date).
+#'@param bdate The biological date variable (dd/mm/yyyy). Please specify the 
+#'  parent environment and variable name (e.g. Biol$Date).
+#'@param baseline The baseline model structure used for model testing. 
+#'  Currently known to support lm, glm, lmer and glmer objects.
+#'@param furthest The furthest number of time intervals (set by cinterval) 
+#'  back from the cutoff date or biological record that will be included in
+#'  the climate window search.
+#'@param closest The closest number of time intervals (set by cinterval) back 
+#'  from the cutoff date or biological record that will be included in the
+#'  climate window search.
+#'@param stat The aggregate statistics used to analyse the climate data. Can 
+#'  currently use basic R statistics (e.g. mean, min), as well as slope. 
+#'  Additional aggregate statistics can be created using the format 
+#'  function(x) (...). See FUN in \code{\link{apply}} for more detail.
+#'@param func The functions used to fit the climate variable. Can be linear 
+#'  ("lin"), quadratic ("quad"), cubic ("cub"), inverse ("inv") or log ("log").
+#'@param type fixed or variable, whether you wish the climate window to be 
+#'  variable (i.e. the number of days before each biological record is 
+#'  measured) or fixed (i.e. number of days before a set point in time).
+#'@param cutoff.day,cutoff.month If type is "fixed", the day and month of the 
+#'  year from which the fixed window analysis will start.
+#'@param cmissing TRUE or FALSE, determines what should be done if there are 
+#'  missing climate data. If FALSE, the function will not run if missing 
+#'  climate data is encountered. If TRUE, any records affected by missing 
+#'  climate data will be removed from climate window analysis.
+#'@param cinterval The resolution at which climate window analysis will be 
+#'  conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units
+#'  of parameters 'furthest' and 'closest' will differ depending on the choice
+#'  of cinterval.
+#'@param cvk The number of folds used for k-fold cross validation. By default
+#'  this value is set to 0, so no cross validation occurs. Value should be a
+#'  minimum of 2 for cross validation to occur.
+#'@param upper Cut-off values used to determine growing degree days or positive 
+#'  climate thresholds (depending on parameter thresh). Note that when values
+#'  of lower and upper are both provided, climatewin will instead calculate an 
+#'  optimal climate zone.
+#'@param lower Cut-off values used to determine chill days or negative 
+#'  climate thresholds (depending on parameter thresh). Note that when values
+#'  of lower and upper are both provided, climatewin will instead calculate an 
+#'  optimal climate zone.
+#'@param thresh TRUE or FALSE. Determines whether to use values of upper and
+#'  lower to calculate binary climate data (thresh = TRUE), or to use for
+#'  growing degree days (thresh = FALSE).
+#'@param centre Variable used for mean centring (e.g. Year, Site, Individual).
+#'  Please specify the parent environment and variable name (e.g. Biol$Year).     
+#'@return Will return a list with an output for each tested set of climate
+#'  window parameters. Each list item contains three objects:
 #'  
-#'  Finds the time period when a biological variable is most strongly affected 
-#'  by climate. Note that climate data and biological data should be loaded as 
-#'  two seperate objects. Both objects should contain a date column to designate
-#'  when the data were recorded (dd/mm/yyyy) and a response variable column.
-#'  @param Xvar The climate variable of interest. Please specify the parent 
-#'    environment and variable name (e.g. Climate$Temp).
-#'  @param CDate The climate date variable (dd/mm/yyyy). Please specify the 
-#'    parent environment and variable name (e.g. Climate$Date).
-#'  @param BDate The biological date variable (dd/mm/yyyy). Please specify the 
-#'    parent environment and variable name (e.g. Biol$Date).
-#'  @param baseline The baseline model structure used for testing correlation. 
-#'    Currently known to support lm, glm, lmer and glmer objects.
-#'  @param furthest The furthest number of time intervals (set by CINTERVAL) 
-#'    back from the cutoff date or biological record that you want to include in
-#'    your climate window search.
-#'  @param closest The closest number of time intervals (set by CINTERVAL) back 
-#'    from the cutoff date or biological record that you want to include in your
-#'    climate window search.
-#'  @param STAT The aggregate statistic used to analyse the climate data. Can 
-#'    currently use basic R statistics (e.g. mean, min), as well as slope. 
-#'    Additional aggregate statistics can be created using the format 
-#'    function(x) (...). See FUN in \code{\link{apply}} for more detail.
-#'  @param FUNC The function used to fit the climate variable. Can be linear 
-#'    ("L"), quadratic ("Q"), cubic ("C"), inverse ("I") or log ("LOG").
-#'  @param FIXED TRUE or FALSE, whether you wish the climate window to be 
-#'    variable (i.e. the number of days before each biological record is 
-#'    measured) or fixed (i.e. number of days before a set point in time).
-#'  @param cutoff.day,cutoff.month If FIXED is TRUE, the day and month of the 
-#'    year from which the fixed window analysis will start.
-#'  @param nrandom Used in conjunction with \code{\link{randwin}}. Not to be 
-#'    changed manually.
-#'  @param CMISSING TRUE or FALSE, determines what should be done if there are 
-#'    missing climate data. If FALSE, the function will not run if missing 
-#'    climate data is encountered. If TRUE, any records affected by missing 
-#'    climate data will be removed from climate window analysis.
-#'  @param CINTERVAL The resolution at which climate window analysis will be 
-#'    conducted. May be days ("D"), weeks ("W"), or months ("M"). Note the units
-#'    of parameters 'furthest' and 'closest' will differ depending on the choice
-#'    of CINTERVAL.
-#'  @return Will return a list containing three objects:
-#'    
-#'    \itemize{ \item BestModel, a model object. The strongest climate window 
-#'    model based on AICc. \item BestModelData, a dataframe with the data used 
-#'    to fit the strongest climate window model. \item WindowOutput, a dataframe
-#'    with information on all fitted climate windows. Ordered using AICc model
-#'    strength, with lowest AICc value first. See \code{\link{MassOutput}} as an
-#'    example. }
-#'  @author Liam D. Bailey and Martijn van de Pol
-#'  @importFrom MuMIn AICc
-#'  @import lme4
-#'  @examples
-#'  \dontrun{
-#'  ##EXAMPLE 1## 
+#'  \itemize{
+#'  \item BestModel, a model object. The strongest climate window model based on AICc. 
+#'  \item BestModelData, a dataframe with the data used to fit the strongest 
+#'  climate window model.
+#'  \item Dataset, a dataframe with information on all fitted climate windows. 
+#'  Ordered using deltaAICc, with most negative deltaAICc values first. 
+#'  See \code{\link{MassOutput}} as an example.}
 #'  
-#'  # Test for a variable climate window using datasets "Offspring"
-#'  # and "OffspringClimate".
+#'  In addition, the returned list includes an object 'combos', a summary of all
+#'  tested sets of climate window parameters. 
+#'@author Liam D. Bailey and Martijn van de Pol
+#'@importFrom MuMIn AICc
+#'@import lme4
+#'@import stats
+#'@import utils
+#'@import graphics
+#'@importFrom lubridate weeks  
+#'@examples
+#'\dontrun{
+#'##EXAMPLE 1## 
 #'  
-#'  # Load data.
+#'# Test both a linear and quadratic variable climate window using datasets "Offspring"
+#'# and "OffspringClimate".
+#'
+#'# Load data.
+#'
+#'data(Offspring) 
+#'data(OffspringClimate)
+#'
+#'# Test both linear and quadratic functions with climate variable temperature
+#'
+#'OffspringWin <- climatewin(xvar = list(Temp = OffspringClimate$Temperature), 
+#'                           cdate = OffspringClimate$Date, 
+#'                           bdate = Offspring$Date, 
+#'                           baseline = glm(Offspring ~ 1, data = Offspring, family = poisson),
+#'                           furthest = 150, closest = 0, 
+#'                           type = "variables", stat = "mean", 
+#'                           func = c("lin", "quad"), cmissing = FALSE, cinterval = "day")
+#'
+#'# Examine tested combinations
 #'  
-#'  data(Offspring) 
-#'  data(OffspringClimate)
+#'OffspringWin$combos
+#'      
+#'# View output for func = "lin"
 #'  
-#'  OffspringWin <- climatewin(Xvar = OffspringClimate$Temperature, 
-#'                             CDate = OffspringClimate$Date, 
-#'                             BDate = Offspring$Date, 
-#'                             baseline = glm(Offspring$Offspring ~ 1, family = poisson),
-#'                             furthest = 150, closest = 0, 
-#'                             FIXED = FALSE, STAT = "mean", 
-#'                             FUNC = "L", CMISSING = FALSE, CINTERVAL = "D")
+#'head(OffspringWin[[1]]$Dataset) 
+#'summary(OffspringWin[[1]]$BestModel)
 #'  
-#'  # View output.
+#'# View output for func = "quad"
 #'  
-#'  head(OffspringWin[[3]]) 
-#'  OffspringWin[[1]]
+#'head(OffspringWin[[2]]$Dataset)
+#'summary(OffspringWin[[2]]$BestModel)
 #'  
-#'  ##EXAMPLE 2##
+#'##EXAMPLE 2##
 #'  
-#'  # Test for a fixed climate window using datasets 'Mass' and 'MassClimate'.
+#'# Test for a fixed climate window with both 'mean' and 'max' aggregate statistics
+#'# using datasets 'Mass' and 'MassClimate'.
 #'  
-#'  # Load data.
+#'# Load data.
 #'  
-#'  data(Mass)
-#'  data(MassClimate)
+#'data(Mass)
+#'data(MassClimate)
 #'  
-#'  # Test a fixed window, starting 20 May
-#'  # Test for climate windows between 100 and 0 days ago (furthest = 100, closest = 0)
-#'  # Fit a linear term for the mean climate (FUNC = "L")
-#'  # Test at the resolution of days (CINTERVAL = "D")
+#'# Test a fixed window, starting 20 May (cutoff.month = 5, cutoff.day = 20)
+#'# Test for climate windows between 100 and 0 days ago (furthest = 100, closest = 0)
+#'# Test both mean and max aggregate statistics (stat = c("mean", "max"))
+#'# Fit a linear term (func = "lin")
+#'# Test at the resolution of days (cinterval = "day")
 #'  
-#'  MassWin <- climatewin(Xvar = MassClimate$Temp, CDate = MassClimate$Date, BDate = Mass$Date,
-#'                        baseline = lm(Mass$Mass ~ 1),
-#'                        furthest = 100, closest = 0,
-#'                        STAT = "mean", FUNC = "L",
-#'                        FIXED = TRUE, cutoff.day = 20, cutoff.month = 5,
-#'                        nrandom = 0, CMISSING = FALSE, CINTERVAL = "D")
+#'MassWin <- climatewin(xvar = list(Temp = MassClimate$Temp), cdate = MassClimate$Date, 
+#'                      bdate = Mass$Date, baseline = lm(Mass ~ 1, data = Mass),
+#'                      furthest = 100, closest = 0,
+#'                      stat = c("mean", "max"), func = "lin",
+#'                      type = "fixed", cutoff.day = 20, cutoff.month = 5,
+#'                      cmissing = FALSE, cinterval = "day")
+#'                        
+#'# Examine tested combinations
 #'  
-#'  # View output
+#'MassWin$combos                      
 #'  
-#'  head(MassWin[[3]])
-#'  MassWin[[1]]
-#'  }
+#'# View output for mean temperature
 #'  
-#'  @export
+#'head(MassWin[[1]]$Dataset)
+#'summary(MassWin[[1]]$BestModel)
+#'  
+#'# View output for max temperature
+#'  
+#'head(MassWin[[2]]$Dataset)
+#'summary(MassWin[[2]]$BestModel)
+#'  
+#'}
+#'  
+#'@export
 
-#LAST EDITED: 17/02/2015
-#EDITED BY: LIAM
-#NOTES: Tidy up code
-# 04/02/2015 Martijn fixed FUNC="I" option
-# renamed Modelwindowstart->WIndowOpen & ModelwindowEnd->WIndowClose
-
-# when FIXED=TRUE and season encompasses two calender years (e.g. oct 2013 to Jan 2014) 
-# then cutoff.day and cutoff.month should chosen to be larger then the closest Biol$Date
-
-climatewin <- function(Xvar, CDate, BDate, baseline, furthest, closest, 
-                       FIXED, cutoff.day, cutoff.month, STAT = "mean", FUNC = "L",
-                      CMISSING = FALSE, CINTERVAL = "D",  nrandom = 0){
+climatewin <- function(xvar, cdate, bdate, baseline, furthest, closest, 
+                       type, cutoff.day, cutoff.month, stat = "mean", func = "lin",
+                       cmissing = FALSE, cinterval = "day", cvk = 0,
+                       upper = NA, lower = NA, thresh = FALSE, centre = NULL){
   
-  print("Initialising, please wait...")
-  pb        <- SetProgressBar(furthest, closest, STAT)    # Calculate the number of models to run 
-  cont      <- DateConverter(BDate = BDate, CDate = CDate, Xvar = Xvar, 
-                             CINTERVAL = CINTERVAL, FIXED = FIXED, 
-                             cutoff.day = cutoff.day, cutoff.month = cutoff.month)   # create new climate dataframe with continuous daynumbers, leap days are not a problem
-  MODNO     <- 1  #Create a model number variable that will count up during the loop#
-  duration  <- (furthest - closest) + 1
-  CMatrix   <- matrix(ncol = (duration), nrow = length(BDate))  # matrix that stores the weather data for variable or fixed windows
-  MODLIST   <- list()   # dataframes to store ouput
-  baseline  <- update(baseline, .~.)
-  nullmodel <- AICc(baseline)
-  
-  for (i in 1:length(BDate)){
-   for (j in closest:furthest){
-     k <- j - closest + 1
-     CMatrix[i, k] <- cont$Xvar[match(cont$BIntNo[i] - j,cont$CIntNo)]   #Create a matrix which contains the climate data from furthest to furthest from each biological record#    
-   }
-  }
-
-  if (CMISSING == FALSE && length(which(is.na(CMatrix))) > 0){
-    stop(c("Climate data file should not contain NA values: ", length(which(is.na(CMatrix))),
-           " NA value(s) found. Please add missing climate data or set CMISSING=TRUE"))
-  }
-  
-  if (CMISSING == TRUE && length(which(is.na(CMatrix))) > 0){
-    modeldat      <- model.frame(baseline)
-    modeldat$Yvar <- modeldat[, 1]
-    modeldat      <- modeldat[complete.cases(CMatrix), ]
-    baseline      <- update(baseline, Yvar~., data = modeldat)
-    CMatrix       <- CMatrix[complete.cases(CMatrix), ]
-  }
-  
-  modeldat           <- model.frame(baseline)
-  modeldat$temporary <- matrix(ncol = 1, nrow = nrow(CMatrix), seq(from = 1, to = nrow(CMatrix), by = 1))
-  
-  if (FUNC == "L"){
-    modeloutput <- update(baseline, .~. + temporary, data = modeldat)
-  } else if (FUNC == "Q") {
-    modeloutput <- update(baseline, .~. + temporary + I(temporary ^ 2), data = modeldat)
-  } else if (FUNC == "C") {
-    modeloutput <- update(baseline, .~. + temporary + I(temporary ^ 2) + I(temporary ^ 3), data = modeldat)
-  } else if (FUNC == "LOG") {
-    modeloutput <- update(baseline, .~. + log(temporary), data = modeldat)
-  } else if (FUNC == "I") {
-    modeloutput <- update (baseline, .~. + I(temporary ^ -1), data = modeldat)
-  } else {
-    print("DEFINE FUNC")
+  #Make xvar a list where the name of list object is the climate variable (e.g. Rain, Temp)
+  if (is.list(xvar) == FALSE){
+    stop("xvar should be an object of type list")
   }
 
-  #CREATE A FOR LOOP TO FIT DIFFERENT CLIMATE WINDOWS#
-  for (m in closest:furthest){
-    for (n in 1:duration){
-      if ( (m - n) >= (closest - 1)){  # do not use windows that overshoot the closest possible day in window   
-        if (STAT != "slope" || n > 1){
-          windowopen  <- m - closest + 1
-          windowclose <- windowopen - n + 1
-          if (STAT == "slope"){ 
-              time               <- seq(1, n, 1)
-              modeldat$temporary <- apply(CMatrix[, windowclose:windowopen], 1, FUN = function(x) coef(lm(x ~ time))[2])
-          } else { 
-            ifelse (n == 1, modeldat$temporary <- CMatrix[, windowclose:windowopen], modeldat$temporary <- apply(CMatrix[, windowclose:windowopen], 1, FUN = STAT))
-          }
-          # run the model
-          modeloutput <- update(modeloutput, .~.) 
-          #Add model parameters to list#
-          MODLIST$ModelAICc[[MODNO]]   <- AICc(modeloutput)
-          MODLIST$WindowOpen[[MODNO]]  <- m
-          MODLIST$WindowClose[[MODNO]] <- m - n + 1
-          
-          if(length(attr(class(modeloutput),"package")) > 0 && attr(class(modeloutput), "package") == "lme4"){
-            MODLIST$ModelBeta[[MODNO]] <- fixef(modeloutput)[2]
-            MODLIST$ModelInt[[MODNO]]  <- fixef(modeloutput)[1]
-            
-            if (FUNC == "Q"){
-              MODLIST$ModelBetaQ[[MODNO]] <- fixef(modeloutput)[3]
-            }   
-            
-            if (FUNC == "C"){
-              MODLIST$ModelBetaQ[[MODNO]] <- fixef(modeloutput)[3]    
-              MODLIST$ModelBetaC[[MODNO]] <- fixef(modeloutput)[4]
-            }
-          } else {
-          MODLIST$ModelBeta[[MODNO]]   <- coef(modeloutput)[2]   # add one coef if quadratic
-          MODLIST$ModelInt[[MODNO]]    <- coef(modeloutput)[1]   # add one coef if quadratic
-          
-          if (FUNC == "Q"){
-            MODLIST$ModelBetaQ[[MODNO]] <- coef(modeloutput)[3]
-          }   
-          
-          if (FUNC == "C"){
-            MODLIST$ModelBetaQ[[MODNO]] <- coef(modeloutput)[3]    
-            MODLIST$ModelBetaC[[MODNO]] <- coef(modeloutput)[4]
-          }
-          }
-          MODNO <- MODNO + 1        #Increase ModNo#
-        }
-      }
-    }  
-    #Fill progress bar
-    setTxtProgressBar(pb, MODNO - 1)
-  }
-  #Save the best model output
-  m <- (MODLIST$WindowOpen[MODLIST$ModelAICc %in% min(MODLIST$ModelAICc)])
-  n <- (MODLIST$WindowOpen[MODLIST$ModelAICc %in% min(MODLIST$ModelAICc)]) - (MODLIST$WindowClose[MODLIST$ModelAICc %in% min(MODLIST$ModelAICc)]) + 1
-  windowopen  <- m - closest + 1
-  windowclose <- windowopen - n + 1
-  if(STAT == "slope"){
-    time      <- seq(1, n, 1)
-    modeldat$temporary <- apply(CMatrix[, windowclose:windowopen], 1, FUN = function(x) coef(lm(x ~ time))[2])
-  } else {
-    ifelse (n == 1, modeldat$temporary <- CMatrix[, windowclose:windowopen], modeldat$temporary <- apply (CMatrix[, windowclose:windowopen], 1, FUN = STAT))
-  }
-  LocalModel           <- update(modeloutput, .~.)
-  MODLIST$baselineAICc <- AICc(baseline)
-  MODLIST$furthest     <- furthest
-  MODLIST$closest      <- closest
-  MODLIST$Statistics   <- STAT
-  MODLIST$Function     <- FUNC
-  MODLIST$FIXED        <- FIXED
-  
-  if (FIXED == TRUE){
-    MODLIST$cutoff.day   <- cutoff.day
-    MODLIST$cutoff.month <- cutoff.month
-  }
-  
-  if (nrandom == 0){
-    LocalData           <- model.frame(LocalModel)
-    MODLIST$Randomised  <- "no"
-    MODLIST             <- as.data.frame(MODLIST)
-    LocalOutput         <- MODLIST[order(MODLIST$ModelAICc), ]
-  }
-  
-  if (nrandom > 0){
-    MODLIST$Randomised <- "yes"
-    MODLIST            <- as.data.frame (MODLIST)
-    LocalOutputRand    <- MODLIST[order(MODLIST$ModelAICc), ]
+  if (is.null(names(xvar)) == TRUE){
+    numbers <- seq(1, length(xvar), 1)
+    for (xname in 1:length(xvar)){
+      names(xvar)[xname] = paste("climate", numbers[xname])
     }
-  
-  if (nrandom == 0){
-    return(list(BestModel = LocalModel, BestModelData = LocalData, WindowOutput = LocalOutput))
-  } else {
-    return(LocalOutputRand)
   }
+  
+  if (is.na(upper) == FALSE && is.na(lower) == FALSE){
+    combos       <- expand.grid(list(upper = upper, lower = lower))
+    combos       <- combos[which(combos$upper >= combos$lower), ]
+    allcombos    <- expand.grid(list(climate = names(xvar), type = type, stat = stat, func = func, gg = c(1:nrow(combos)), thresh = thresh))
+    allcombos    <- cbind(allcombos, combos[allcombos$gg, ], deparse.level = 2)
+    threshlevel  <- "two"
+    allcombos$gg <- NULL
+  } else if (is.na(upper) == FALSE && is.na(lower) == TRUE){
+    allcombos   <- expand.grid(list(climate = names(xvar), type = type, stat = stat, func = func, upper = upper, thresh = thresh))
+    threshlevel <- "upper"
+  } else if (is.na(upper) == TRUE && is.na(lower) == FALSE){
+    allcombos   <- expand.grid(list(climate = names(xvar), type = type, stat = stat, func = func, lower = lower, thresh = thresh))
+    threshlevel <- "lower"
+  } else if (is.na(upper) == TRUE && is.na(lower) == TRUE){
+    allcombos   <- expand.grid(list(climate = names(xvar), type = type, stat = stat, func = func))
+    threshlevel <- "none"
+  }
+  
+  rownames(allcombos) <- seq(1, nrow(allcombos), 1)
+  print("All combinations to be tested...")
+  print(allcombos)
+  
+  combined <- list()
+  for (combo in 1:nrow(allcombos)){
+    runs <- basewin(xvar = xvar[[paste(allcombos[combo, 1])]], cdate = cdate, bdate = bdate, baseline = baseline,
+                    furthest = furthest, closest = closest, type = paste(allcombos[combo, 2]), cutoff.day = cutoff.day,
+                    cutoff.month = cutoff.month, stat = paste(allcombos[combo, 3]), func = paste(allcombos[combo, 4]),
+                    cmissing = cmissing, cinterval = cinterval, cvk = cvk, 
+                    upper = ifelse(threshlevel == "two" || threshlevel == "upper", allcombos$upper[combo], NA),
+                    lower = ifelse(threshlevel == "two" || threshlevel == "lower", allcombos$lower[combo], NA),
+                    thresh = paste(allcombos$thresh[combo]), centre = centre)
+    combined[[combo]] <- runs
+  }
+  combined <- c(combined, combos = list(allcombos))
+  return(combined)
 }

@@ -6,12 +6,13 @@ test_that("plotcor produces a graph", {
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
   
-  cross <- crosswin(Xvar = MassClimate$Temp, Xvar2 = MassClimate$Rain, CDate = MassClimate$Date,
-                    BDate = Mass$Date, furthest = 2, closest = 1, 
-                    STAT = "max", FIXED = FALSE,
-                    CMISSING = FALSE, CINTERVAL = "D")
+  cross <- crosswin(xvar = list(Temp = MassClimate$Temp), 
+                    xvar2 = list(Rain = MassClimate$Rain), cdate = MassClimate$Date,
+                    bdate = Mass$Date, furthest = 2, closest = 1, 
+                    stat = "max", stat2 = "max", type = "variable",
+                    cmissing = FALSE, cinterval = "day")
   
-  test <- plotcor(CorWindowOutput = cross, TYPE = "A")
+  test <- plotcor(cor.output = cross, type = "A")
   
   expect_true(attr(test, "class")[1]=="gg") 
   
