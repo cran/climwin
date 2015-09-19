@@ -1,11 +1,11 @@
-7ccf21b8364643d718515fac162063e3 *DESCRIPTION
+f15c54d78816f13ec3fa0b7389830046 *DESCRIPTION
 28a1990884f9373f4d942332492b6b95 *NAMESPACE
 8f29d3120929c9d9f559ff5034691226 *R/autowin.R
 ecc9abc776902f4a6ef51f8868109bcb *R/climatewin.R
 572de30cacc947d0b4344f823ba8d88b *R/crosswin.R
 10f059d72d62202f7e9377dddb93640f *R/datasets.R
 17e48c8ca19efd8c50db23451369d0b2 *R/explore.R
-b9dec9ea7278142b34b605c7bf1fe3c7 *R/otherfunctions.R
+56437e0fe219f457d04ad05ef4dc5387 *R/otherfunctions.R
 d66075378a27351bf361130efab7568c *R/plotall.R
 b528a3db6f4349045a2848f0012505cd *R/plotbest.R
 4c420b03e551565115076d63197fa6fc *R/plotbetas.R
@@ -17,7 +17,7 @@ f0a299091e15ea60d5ccc617a2959383 *R/plotweights.R
 c4439fbd66d1015f66b2391bef16c4e3 *R/randwin.R
 4f63eff3f4d8e8bacac4c751d3505672 *R/singlewin.R
 c0515c67ff0332e23d52ce71eb6fe9fe *R/weightwin.R
-16ef0be464a88510f6e027adc7bb1c49 *R/zzz.R
+5392bea31a5b7b2e014b83a9fba3e499 *R/zzz.R
 bf86769ebd9bed17d568a65d44852b27 *README.md
 315bea35286675cebf01f2a222cf9e7e *build/vignette.rds
 33f47415ab73cba58a2e77fe27618627 *data/Mass.rda
@@ -28,7 +28,7 @@ a50082801aaf68321cab385d62a83e99 *data/MassOutput.rda
 6b88b75444960432d1eb7e74132b34f1 *data/OffspringClimate.rda
 fbad418eeb09c4ac8e28169b9f867be6 *inst/doc/climwin.R
 d9e46fa5c2c0a399c93ef9a2ae031498 *inst/doc/climwin.Rmd
-6042da44b1a2f7af27d2893e2b6806b7 *inst/doc/climwin.html
+0a148cf0dbf40b8c7cafb3fd4c51adef *inst/doc/climwin.html
 36cad11769cc001f08cd46ef4ef350ae *man/Mass.Rd
 aeec497596b728a9aa2b984db127c698 *man/MassClimate.Rd
 adbf7d662f1bd551dddfeebf1f5b8cdf *man/MassOutput.Rd
