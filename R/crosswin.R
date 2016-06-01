@@ -1,7 +1,4 @@
-#'Test the correlation between two climate variables
-#'
-#'Test the correlation between two climate variables across all considered climate
-#'windows.
+#'Test the correlation between two climate variables.
 #'@param xvar The first climate variable of interest. Please specify the parent 
 #'  environment and variable name (e.g. Climate$Temp).
 #'@param xvar2 The second climate variable of interest. Please specify the parent 
@@ -10,12 +7,9 @@
 #'  environment and variable name (e.g. Climate$Date).
 #'@param bdate The biological date variable (dd/mm/yyyy). Please specify the 
 #'  parent environment and variable name (e.g. Biol$Date).
-#'@param furthest The furthest number of time intervals (set by cinterval) back
-#'  from the cutoff date or biological record that will be included in the
-#'  climate window search.
-#'@param closest The closest number of time intervals (set by cinterval) back 
-#'  from the cutoff date or biological record that will be included in the 
-#'  climate window search.
+#'@param range Two values signifying respectively the furthest and closest number 
+#'  of time intervals (set by cinterval) back from the cutoff date or biological record to include 
+#'  in the climate window search.
 #'@param stat The aggregate statistic used to analyse the climate data. Can 
 #'  currently use basic R statistics (e.g. mean, min), as well as slope. 
 #'  Additional aggregate statistics can be created using the format function(x) 
@@ -24,19 +18,32 @@
 #'  currently use basic R statistics (e.g. mean, min), as well as slope. 
 #'  Additional aggregate statistics can be created using the format function(x) 
 #'  (...). See FUN in \code{\link{apply}} for more detail.
-#'@param type fixed or variable, whether you wish the climate window to be variable
-#'  (i.e. the number of days before each biological record is measured) or fixed
-#'  (i.e. number of days before a set point in time).
-#'@param cutoff.day,cutoff.month If type is "fixed", the day and month of the year
-#'  from which the fixed window analysis will start.
+#'@param type "absolute" or "relative", whether you wish the climate window to be relative
+#'  (e.g. the number of days before each biological record is measured) or absolute
+#'  (e.g. number of days before a set point in time).
+#'@param refday If type is absolute, the day and month respectively of the 
+#'  year from which the absolute window analysis will start.
 #'@param cmissing TRUE or FALSE, determines what should be done if there are 
 #'  missing climate data. If FALSE, the function will not run if missing climate
 #'  data is encountered. If TRUE, any records affected by missing climate data 
 #'  will be removed from climate window analysis.
 #'@param cinterval The resolution at which climate window analysis will be 
 #'  conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units 
-#'  of parameters 'furthest' and 'closest' will differ depending on the choice 
+#'  of parameter 'range' will differ depending on the choice 
 #'  of cinterval
+#'@param spatial A list item containing:
+#'  1. A factor that defines which spatial group (i.e. population) each biological
+#'  record is taken from. The length of this factor should correspond to the length 
+#'  of the biological dataset.
+#'  2. A factor that defines which spatial group (i.e. population) climate data
+#'  corresponds to. This length of this factor should correspond to the length of
+#'  the climate dataset.
+#'@param cohort A variable used to group biological records that occur in the same biological
+#'  season but cover multiple years (e.g. southern hemisphere breeding season). By default,
+#'  autowin will use year (extracted from parameter bdate) as the cohort variable. 
+#'  The cohort variable should be in the same dataset as the variable bdate.
+#'@param cutoff.day,cutoff.month Redundant parameters. Now replaced by refday.
+#'@param furthest,closest Redundant parameters. Now repalced by range.
 #'@return Will return a dataframe containing the correlation between the two
 #'  climate variables.
 #'@author Liam D. Bailey and Martijn van de Pol
@@ -50,8 +57,8 @@
 #'cross <- crosswin(xvar = list(Temp = MassClimate$Temp), 
 #'                  xvar2 = list(Rain = MassClimate$Rain), 
 #'                  cdate = MassClimate$Date, bdate = Mass$Date, 
-#'                  furthest = 365, closest = 0,
-#'                  stat = "mean", stat2 = "mean", type = "variable",
+#'                  range = c(365, 0),
+#'                  stat = "mean", stat2 = "mean", type = "relative",
 #'                  cmissing = FALSE, cinterval = "day")
 #'                 
 #'# View the output
@@ -64,69 +71,124 @@
 #' 
 #'@export
 
-#LAST EDITED: 18/02/2015
-#EDITED BY: LIAM
-#NOTES: Tidy up code
-
-crosswin <- function(xvar, xvar2, cdate, bdate, furthest, closest, 
-                     stat, stat2, type, cutoff.day, cutoff.month,
-                     cinterval = "day", cmissing = FALSE){
+crosswin <- function(xvar, xvar2, cdate, bdate, range, 
+                     stat, stat2, type, refday,
+                     cinterval = "day", cmissing = FALSE, 
+                     spatial = NULL, cohort = NULL,
+                     cutoff.day = NULL, cutoff.month = NULL,
+                     furthest = NULL, closest = NULL){
   
   print("Initialising, please wait...")
+  
+  if(is.null(cohort) == TRUE){
+    cohort = lubridate::year(as.Date(bdate, format = "%d/%m/%Y")) 
+  }
+  
+  if(type == "variable" || type == "fixed"){
+    stop("Parameter 'type' now uses levels 'relative' and 'absolute' rather than 'variable' and 'fixed'.")
+  }
+  
+  if(is.null(furthest) == FALSE & is.null(closest) == FALSE){
+    stop("furthest and closest are now redundant. Please use parameter 'range' instead.")
+  }
+  
+  if(is.null(cutoff.day) == FALSE & is.null(cutoff.month) == FALSE){
+    stop("cutoff.day and cutoff.month are now redundant. Please use parameter 'refday' instead.")
+  }
   
   xvar  <- xvar[[1]]
   xvar2 <- xvar2[[1]]
   
-  duration <- (furthest - closest) + 1
+  duration <- (range[1] - range[2]) + 1
   maxmodno <- (duration * (duration + 1))/2 
   cont     <- convertdate(bdate = bdate, cdate = cdate, xvar = xvar, xvar2 = xvar2, 
-                            cinterval = cinterval, type = type, 
-                            cutoff.day = cutoff.day, cutoff.month = cutoff.month, cross = TRUE)   # create new climate dataframe with continuous daynumbers, leap days are not a problem
+                          cinterval = cinterval, type = type, cohort = cohort,
+                          refday = refday, cross = TRUE, spatial = spatial)   # create new climate dataframe with continuous daynumbers, leap days are not a problem
   modno    <- 1  #Create a model number variable that will count up during the loop#
   modlist  <- list()   # dataframes to store ouput
   cmatrix1 <- matrix(ncol = (duration), nrow = length(bdate))  # matrix that stores the weather data for variable or fixed windows
   cmatrix2 <- matrix(ncol = (duration), nrow = length(bdate))  # matrix that stores the weather data for variable or fixed windows
-  
-  for (i in 1:length(bdate)){
-    for (j in closest:furthest){
-      k <- j - closest + 1
-      cmatrix1[i, k] <- cont$xvar[which(cont$cintn == cont$bintno[i] - j)]  #Create a matrix which contains the climate data from furthest to furthest from each biological record#
-      cmatrix2[i, k] <- cont$xvar2[which(cont$cintno == cont$bintno[i] - j)]
+
+  if(is.null(spatial) == FALSE){
+    for (i in 1:length(bdate)){
+        cmatrix1[i, ] <- cont$xvar[which(cont$cintno$spatial %in% cont$bintno$spatial[i] & cont$cintno$Date %in% (cont$bintno$Date[i] - c(range[2]:range[1]))), 1]   #Create a matrix which contains the climate data from furthest to furthest from each biological record#    
+        cmatrix2[i, ] <- cont$xvar2[which(cont$cintno$spatial %in% cont$bintno$spatial[i] & cont$cintno$Date %in% (cont$bintno$Date[i] - c(range[2]:range[1]))), 1]   #Create a matrix which contains the climate data from furthest to furthest from each biological record#    
+    }
+  } else {
+    for (i in 1:length(bdate)){
+      cmatrix1[i, ] <- cont$xvar[which(cont$cintno %in% (cont$bintno[i] - c(range[2]:range[1])))]   #Create a matrix which contains the climate data from furthest to furthest from each biological record#    
+      cmatrix2[i, ] <- cont$xvar2[which(cont$cintno %in% (cont$bintno[i] - c(range[2]:range[1])))]   #Create a matrix which contains the climate data from furthest to furthest from each biological record#    
     }
   }
+  cmatrix1 <- as.matrix(cmatrix1[, c(ncol(cmatrix1):1)])
+  cmatrix2 <- as.matrix(cmatrix2[, c(ncol(cmatrix2):1)])
   
-  if (cmissing == FALSE && length(which(is.na(cmatrix1))) > 0){
-    if(cinterval == "day"){
-      .GlobalEnv$missing <- as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+  if(is.null(spatial) == FALSE){
+    if (cmissing == FALSE && length(which(is.na(cmatrix1))) > 0){
+      if(cinterval == "day"){
+        .GlobalEnv$missing <- as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+      }
+      if(cinterval == "month"){
+        .GlobalEnv$missing <- c(paste("Month:", month(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      if(cinterval == "week"){
+        .GlobalEnv$missing <- c(paste("Week:", month(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      stop(c("Climate data xvar should not contain NA values: ", length(.GlobalEnv$missing),
+             " NA value(s) found. Please add missing climate data or set cmissing=TRUE.
+             See object missing for all missing climate data"))
+    }  
+    if (cmissing == FALSE && length(which(is.na(cmatrix2))) > 0){
+      if(cinterval == "day"){
+        .GlobalEnv$missing <- as.Date(cont$cintno$Date[is.na(cont$xvar2$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+      }
+      if(cinterval == "month"){
+        .GlobalEnv$missing <- c(paste("Month:", month(as.Date(cont$cintno$Date[is.na(cont$xvar2$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno$Date[is.na(cont$xvar2$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      if(cinterval == "week"){
+        .GlobalEnv$missing <- c(paste("Week:", month(as.Date(cont$cintno$Date[is.na(cont$xvar2$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno$Date[is.na(cont$xvar2$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      stop(c("Climate data xvar2 should not contain NA values: ", length(.GlobalEnv$missing),
+             " NA value(s) found. Please add missing climate data or set cmissing=TRUE.
+             See object missing for all missing climate data"))
     }
-    if(cinterval == "month"){
-      .GlobalEnv$missing <- c(paste("Month:", month(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
-                                    "Year:", year(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
-    }
-    if(cinterval == "week"){
-      .GlobalEnv$missing <- c(paste("Week:", month(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
-                                    "Year:", year(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
-    }
-    stop(c("Climate data xvar should not contain NA values: ", length(.GlobalEnv$missing),
-           " NA value(s) found. Please add missing climate data or set cmissing=TRUE.
+  } else {
+    if (cmissing == FALSE && length(which(is.na(cmatrix1))) > 0){
+      if(cinterval == "day"){
+        .GlobalEnv$missing <- as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+      }
+      if(cinterval == "month"){
+        .GlobalEnv$missing <- c(paste("Month:", month(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      if(cinterval == "week"){
+        .GlobalEnv$missing <- c(paste("Week:", month(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      stop(c("Climate data xvar should not contain NA values: ", length(.GlobalEnv$missing),
+             " NA value(s) found. Please add missing climate data or set cmissing=TRUE.
            See object missing for all missing climate data"))
-  }  
-  
-  if (cmissing == FALSE && length(which(is.na(cmatrix2))) > 0){
-    if(cinterval == "day"){
-      .GlobalEnv$missing <- as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
-    }
-    if(cinterval == "month"){
-      .GlobalEnv$missing <- c(paste("Month:", month(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
-                                    "Year:", year(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
-    }
-    if(cinterval == "week"){
-      .GlobalEnv$missing <- c(paste("Week:", month(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
-                                    "Year:", year(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
-    }
-    stop(c("Climate data xvar2 should not contain NA values: ", length(.GlobalEnv$missing),
-           " NA value(s) found. Please add missing climate data or set cmissing=TRUE.
+    }  
+    if (cmissing == FALSE && length(which(is.na(cmatrix2))) > 0){
+      if(cinterval == "day"){
+        .GlobalEnv$missing <- as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+      }
+      if(cinterval == "month"){
+        .GlobalEnv$missing <- c(paste("Month:", month(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      if(cinterval == "week"){
+        .GlobalEnv$missing <- c(paste("Week:", month(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", year(as.Date(cont$cintno[is.na(cont$xvar2)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+      }
+      stop(c("Climate data xvar2 should not contain NA values: ", length(.GlobalEnv$missing),
+             " NA value(s) found. Please add missing climate data or set cmissing=TRUE.
            See object missing for all missing climate data"))
+    } 
   }
   
   if (cmissing == TRUE){ 
@@ -139,11 +201,11 @@ crosswin <- function(xvar, xvar2, cdate, bdate, furthest, closest,
   
   pb <- txtProgressBar(min = 0, max = maxmodno, style = 3, char = "|")
   
-  for (m in closest:furthest){
+  for (m in range[2]:range[1]){
     for (n in 1:duration){
-      if ( (m - n) >= (closest - 1)){  # do not use windows that overshoot the closest possible day in window   
+      if ( (m - n) >= (range[2] - 1)){  # do not use windows that overshoot the closest possible day in window   
         if (stat != "slope" || stat2 != "slope" || n > 1){
-          windowopen  <- m - closest + 1
+          windowopen  <- m - range[2] + 1
           windowclose <- windowopen - n + 1
           if (stat == "slope"){ 
             time <- seq(1, n, 1)
@@ -181,15 +243,15 @@ crosswin <- function(xvar, xvar2, cdate, bdate, furthest, closest,
     #Fill progress bar
     setTxtProgressBar(pb, modno - 1)
   }
-  modlist$Furthest    <- furthest
-  modlist$Closest     <- closest
+  modlist$Furthest    <- range[1]
+  modlist$Closest     <- range[2]
   modlist$Statistics  <- stat
   modlist$Statistics2 <- stat2
   modlist$Type        <- type
   
   if (type == "fixed"){
-    modlist$Cutoff.day   <- cutoff.day
-    modlist$Cutoff.month <- cutoff.month
+    modlist$Reference.day   <- refday[1]
+    modlist$Reference.month <- refday[2]
   }
   return(as.data.frame(modlist))
 }

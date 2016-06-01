@@ -1,60 +1,77 @@
 # Test singlewin function #
-
-# Test that singlewin outputs SingleBestModel and SingleBestModelData
-# Check that coefficients of SingleBestModel are not NA
-# Check that there are no NAs in SingleBestModelData
-# Check that SingleBestModelData has at least 2 columns
-
-test_that("singlewin creates an output", {
+test_that("singlewin creates an output when cinterval = day", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
   
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date,
-                    baseline = lm(Mass$Mass~1), furthest = 72, closest = 15,
+                    baseline = lm(Mass$Mass~1), range = c(72, 15),
                     stat = "mean", func = "lin",
-                    type = "variable", cmissing = FALSE, cinterval = "day")
+                    type = "relative", cmissing = FALSE, cinterval = "day")
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that singlewin best model is created
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that best model data contains no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
-test_that("cinterval W works", {
+# Test that cinterval = week works
+test_that("singlewin creates an output when cinterval = week", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
   
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date,
-                    baseline = lm(Mass ~ 1, data = Mass), furthest = 1, closest = 0,
+                    baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0),
                     stat = "mean", func = "lin",
-                    type = "variable", cmissing = FALSE, cinterval = "week")
+                    type = "relative", cmissing = FALSE, cinterval = "week")
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that singlewin best model is created
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that best model data contains no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
-test_that("cinterval M works", {
+# Test that cinterval = month works
+test_that("singlewin creates an output when cinterval = month", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
   
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date,
-                    baseline = lm(Mass ~ 1, data = Mass), furthest = 1, closest = 0,
+                    baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0),
                     stat = "mean", func = "lin",
-                    type = "variable", cmissing = FALSE, cinterval = "month")
+                    type = "relative", cmissing = FALSE, cinterval = "month")
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that singlewin best model is created
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that best model data contains no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
@@ -63,7 +80,7 @@ test_that("cinterval M works", {
 
 # Test different settings of cmissing #
 
-#When cmissing is TRUE and no NA is present#
+# Test when cmissing is TRUE and no NA is present#
 test_that("No errors return when cmissing TRUE and full dataset", {
   
   data(Mass, envir = environment())
@@ -72,18 +89,25 @@ test_that("No errors return when cmissing TRUE and full dataset", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 2, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
                     func = "lin", cmissing = TRUE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that singlewin best model is created
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that best model data contains no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
-#When cmissing is TRUE and NA is present#
+#Test when cmissing is TRUE and NA is present#
 test_that("No errors return when cmissing TRUE with NAs", {
   
   data(Mass, envir = environment())
@@ -93,29 +117,38 @@ test_that("No errors return when cmissing TRUE with NAs", {
   test <- singlewin(xvar = list(Temp = MassClimate2$Temp), 
                     cdate = MassClimate2$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 0, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 0), 
+                    type = "relative", stat = "max", 
                     func = "lin", cmissing = TRUE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that singlewin best model is created
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that best model data contains no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
-#When cmissing is FALSE and NA is present#
-test_that("No errors return when cmissing FALSE with NAs", {
+#Test when cmissing is FALSE and NA is present#
+test_that("Errors are returned when cmissing is FALSE with NAs", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
   
   MassClimate2 <- MassClimate[-491, ]
+  
+  # Test that an error is returned
   expect_error(singlewin(xvar = list(Temp = MassClimate2$Temp), 
                          cdate = MassClimate2$Date, bdate = Mass$Date, 
                          baseline = lm(Mass ~ 1, data = Mass), 
-                         furthest = 2, closest = 2, 
-                         type = "variable", stat = "max", func = "lin", 
+                         range = c(2, 2), 
+                         type = "relative", stat = "max", func = "lin", 
                          cmissing = FALSE))
   
 })
@@ -125,8 +158,8 @@ test_that("No errors return when cmissing FALSE with NAs", {
 
 # Test different types of models #
 
-# Test glm models #
-test_that("glm models can run", {
+# Test glm models
+test_that("glm models can run in singlewin", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -134,19 +167,26 @@ test_that("glm models can run", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = glm(Mass ~ 1, data = Mass, family = poisson), 
-                    furthest = 2, closest = 2, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
                     func = "lin", cmissing = FALSE)
   
-  expect_true(is.list(test))
-  expect_false(is.na((test[[1]])[1]))
+  # Test that singlewin produces an output
+  expect_true(is.list(test))  
   
+  # Test that singlewin best model is created
+  expect_false(is.na(test[[1]][1]))
+  
+  # Test that best model data contains no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
-test_that("lmer models can run", {
+# Test lmer models
+test_that("lmer models can run in singlewin", {
   
   data(Offspring, envir = environment())
   data(OffspringClimate, envir = environment())
@@ -155,24 +195,63 @@ test_that("lmer models can run", {
                     cdate = OffspringClimate$Date, 
                     bdate = Offspring$Date, 
                     baseline = lmer(Offspring ~ 1 + (1|BirdID), data = Offspring),  
-                    furthest = 2, closest = 2, type = "variable", 
+                    range = c(2, 2), type = "relative", 
                     stat = "max", func = "lin", cmissing = FALSE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))
+  
+  # Test that singlewin creates an intercept value
   expect_false(is.na(fixef(test[[1]])[1]))
+  
+  # Test that singlewin creates a beta estimate for climate
   expect_false(is.na(fixef(test[[1]])[2]))
   
+  # Test that best model data has no NAs
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data includes at least 2 parameters
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
+# Test glmer models 
+test_that("glmer models can run in singlewin", {
+  
+  data(Offspring, envir = environment())
+  data(OffspringClimate, envir = environment())
+  
+  # Warnings created due to convergence issues with such a small data set
+  suppressWarnings(test <- singlewin(xvar = list(Temp = OffspringClimate$Temp), 
+                                cdate = OffspringClimate$Date, 
+                                bdate = Offspring$Date, 
+                                baseline = glmer(Offspring ~ 1 + (1|Order), data = Offspring, family = "poisson"),  
+                                range = c(2, 2), type = "relative", 
+                                stat = "max", func = "lin", cmissing = FALSE))
+  
+  # Test that climatewin has produced an output
+  expect_true(is.list(test))
+  
+  # Test that glmer model produced an intercept
+  expect_false(is.na(fixef(test$BestModel)[1]))
+  
+  # Test that glmer model produced a beta estimate for climate
+  expect_false(is.na(fixef(test$BestModel)[2]))
+  
+  # Test there are no NA values in best model data
+  expect_equal(length(which(is.na(test$BestModelData))), 0)
+  
+  # Test that best model data has atleast two parameters
+  expect_true(ncol(test$BestModelData) >= 2)
+  
+})
+
+## COXPH ##
+
 ##########################################################
 
-# Test fixed and variable #
-
-# Test fixed window#
-test_that("Fixed window works", {
+# Test absolute windows #
+test_that("Absolute window works", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -180,10 +259,11 @@ test_that("Fixed window works", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 2, 
-                    type = "fixed", cutoff.day = 20, cutoff.month = 5, 
+                    range = c(2, 2), 
+                    type = "absolute", refday = c(20, 5), 
                     stat = "max", func = "lin", cmissing = FALSE)
   
+  # Test that singlewin produces an object
   expect_true(is.list(test))
   
 })
@@ -199,13 +279,20 @@ test_that("slope stats work", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 1, 
-                    type = "variable", stat = "slope", 
+                    range = c(2, 1), 
+                    type = "relative", stat = "slope", 
                     func = "lin", cmissing = FALSE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that the best model has no NAs
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that there are no NAs in the best model data 
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has atleast 2 columns
   expect_true(ncol(test[[2]]) >= 2)
   
 })
@@ -214,8 +301,8 @@ test_that("slope stats work", {
 
 #Test different functions for fitting climate#
 
-#Test quadratic function#
-test_that("Quadratic function works", {
+# Test quadratic function
+test_that("Quadratic function works in singlewin", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -223,19 +310,26 @@ test_that("Quadratic function works", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 2, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
                     func = "quad", cmissing = FALSE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that the best model has no NAs
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that there are no NAs in the best model data 
   expect_equal(length(which(is.na(test[[2]]))), 0)
-  expect_true(ncol(test[[2]]) >= 2)
+  
+  # Test that best model data has atleast 3 columns
+  expect_true(ncol(test[[2]]) >= 3)
   
 })
 
-#Test cubic function#
-test_that("Cubic function works", {
+#Test cubic function
+test_that("Cubic function works in singlewin", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -243,19 +337,26 @@ test_that("Cubic function works", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 2, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
                     func = "cub", cmissing = FALSE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that the best model has no NAs
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that there are no NAs in the best model data 
   expect_equal(length(which(is.na(test[[2]]))), 0)
-  expect_true(ncol(test[[2]]) >= 2)
+  
+  # Test that best model data has atleast 4 columns
+  expect_true(ncol(test[[2]]) >= 4)
   
 })
 
-#Test log function#
-test_that("Log function works", {
+# Test log function
+test_that("Log function works in singlewin", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -263,19 +364,26 @@ test_that("Log function works", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 2, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
                     func = "log", cmissing = FALSE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that the best model has no NAs
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that there are no NAs in the best model data 
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has atleast 2 columns
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
 #Test log function#
-test_that("Inverse function works", {
+test_that("Inverse function works in singlewin", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -283,30 +391,73 @@ test_that("Inverse function works", {
   test <- singlewin(xvar = list(Temp = MassClimate$Temp), 
                     cdate = MassClimate$Date, bdate = Mass$Date, 
                     baseline = lm(Mass ~ 1, data = Mass), 
-                    furthest = 2, closest = 2, 
-                    type = "variable", stat = "max", 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
                     func = "inv", cmissing = FALSE)
   
+  # Test that singlewin produces an output
   expect_true(is.list(test))  
+  
+  # Test that the best model has no NAs
   expect_false(is.na(test[[1]][1]))
+  
+  # Test that there are no NAs in the best model data 
   expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has atleast 2 columns
   expect_true(ncol(test[[2]]) >= 2)
   
 })
 
 ################################################################
 
-#Error when you have NAs in the biological data
+#Test that an error is returned when you have NAs in the biological data
 test_that("singlewin gives error when NAs are present in biological data", {
   
   data(MassClimate, envir = environment())
   Mass <- data.frame(Date = c("01/01/2014", "01/02/2014"), Mass = c(NA, 1))
   
+  # Test that an error occurs
   expect_error(singlewin(xvar = list(Temp = MassClimate$Temp), 
                          cdate = MassClimate$Date, bdate = Mass$Date, 
                          baseline = lm(Mass ~ 1, data = Mass), 
-                         furthest = 2, closest = 2, 
-                         type = "variable", stat = "max", 
+                         range = c(2, 2), 
+                         type = "relative", stat = "max", 
                          func = "lin", cmissing = FALSE))
+  
+})
+
+################################################################
+
+#Test spatial replication#
+test_that("spatial replication works with singlewin", {
+  
+  data(Mass, envir = environment())
+  Mass$Plot <- c(rep(c("A", "B"), 23), "A")
+  data(MassClimate, envir = environment())
+  MassClimate$Plot <- "A"
+  MassClimate2 <- MassClimate
+  MassClimate2$Plot <- "B"
+  Clim <- rbind(MassClimate, MassClimate2)
+  
+  test <- singlewin(xvar = list(Temp = Clim$Temp), 
+                    cdate = Clim$Date, bdate = Mass$Date, 
+                    baseline = lm(Mass ~ 1, data = Mass), 
+                    range = c(2, 2), 
+                    type = "relative", stat = "max", 
+                    func = "lin", cmissing = FALSE,
+                    spatial = list(Mass$Plot, Clim$Plot))
+  
+  # Test that singlewin produces an output
+  expect_true(is.list(test))  
+  
+  # Test that the best model has no NAs
+  expect_false(is.na(test[[1]][1]))
+  
+  # Test that there are no NAs in the best model data 
+  expect_equal(length(which(is.na(test[[2]]))), 0)
+  
+  # Test that best model data has atleast 2 columns
+  expect_true(ncol(test[[2]]) >= 2)
   
 })

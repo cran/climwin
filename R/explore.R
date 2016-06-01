@@ -1,6 +1,6 @@
 #'Visualise the weight distribution for given parameter values
 #' 
-#'Create a plot of the weibell or generalised extreme values (GEV) distribution
+#'Create a plot of the Weibell or Generalised Extreme Values (GEV) distribution
 #'for given values of shape, scale and location parameters. Used to determine 
 #'initial parameter values for \code{\link{weightwin}}.
 #'@param shape A parameter that determines the shape of the distribution. 
@@ -11,7 +11,7 @@
 #' Should be less than or equal to 0.
 #'@param weightfunc Choose whether to use a weibull ("W") or GEV ("G")
 #' distribution.
-#'@return ExploreWeight will return an example plot of the distribution using
+#'@return explore will return an example plot of the distribution using
 #' given parameter values. This can be used to select the initial parameter 
 #' values for \code{\link{weightwin}}
 #'@author Martijn van de Pol and Liam D. Bailey
@@ -55,7 +55,9 @@ explore <- function(shape = 1, scale = 1, loc = 0, weightfunc = "W"){
     }
     
     title <- c("Weibull", paste("shape=", shape, "scale=", scale, "location=", loc))
-    plot((weight / sum(weight)), type = "l", ylab = "weight", xlab = "timesteps", main = title, xaxt = 'n')
+    plot((weight / sum(weight)), type = "l", ylab = "Weight", xlab = "", main = title, xaxt = 'n',
+         cex.lab = 1.25, cex.axis = 1.25, cex = 1.5, mgp = c(2.5, 1, 0))
+    mtext("Time steps", side = 1 , line = 1, cex = 1.25)
   }
   
   if (weightfunc == "G"){
@@ -69,6 +71,8 @@ explore <- function(shape = 1, scale = 1, loc = 0, weightfunc = "W"){
       weight <- weight + 1
     }
     title <- c("GEV", paste("shape=", shape, "scale=", scale, "location=", loc))
-    plot((weight / sum(weight)), type = "l", ylab = "weight", xlab = "timesteps", main = title, xaxt = 'n')
+    plot((weight / sum(weight)), type = "l", ylab = "Weight", xlab = "", main = title, xaxt = 'n',
+         cex.lab = 1.25, cex.axis = 1.25, cex = 1.5, mgp = c(2.5, 1, 0))
+    mtext("Time steps", side = 1 , line = 1, cex = 1.25)
   }
 }

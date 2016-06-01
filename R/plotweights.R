@@ -3,12 +3,18 @@
 #'Create a plot showing the distribution of cumulative model weights for
 #'all fitted climate windows.
 #'@param dataset A dataframe containing information on all fitted climate 
-#'  windows. Output from \code{\link{climatewin}}.
+#'  windows. Output from \code{\link{slidingwin}}.
 #'@param cw1,cw2,cw3 Cumulative weight levels used to visualise model weight 
 #'  distribution. Cumulative weights represent the chance that the best model is
 #'  contained within a set. For example, there is a 95 percent chance that the best
 #'  climate window model is contained within the cumulative weight level of
 #'  0.95. Parameter values must <= 1.
+#'@param arrow TRUE or FALSE. Add arrows to plots to pinpoint best window.
+#'@param plotall Used in conjunction with function \code{\link{plotall}}. 
+#' Should not be changed manually.
+#'@param plotallenv Used in conjunction with function \code{\link{plotall}}.
+#' Should not be changed manually.
+
 #'@return Returns a plot showing the distribution of cumulative model
 #'  weights. Levels determined by parameters cw1,cw2 and cw3.
 #'@author Liam D. Bailey and Martijn van de Pol
@@ -21,15 +27,33 @@
 #'@import ggplot2
 #'@export
 
-plotweights <- function(dataset, cw1 = 0.95, cw2 = 0.5, cw3 = 0.25){
+plotweights <- function(dataset, cw1 = 0.95, cw2 = 0.5, cw3 = 0.25, arrow = FALSE, plotall = FALSE, plotallenv){
 
+  #Order cw1, cw2 and cw3 so that cw1 is always the largest value
   a          <- c(cw1, cw2, cw3)
   b          <- a[order (-a)]
   cw         <- cw1
   cw1        <- b[1]
   cw2        <- b[2]
   cw3        <- b[3]
+  
+  #Determine the % of models that fall within the 95% cumulative set (i.e. Spread or C)
   WeightDist <- ceiling(100*mean(as.numeric(cumsum(dataset$ModWeight) <= cw1)))
+  
+  #Create a subset of the models that fall within the 95% confidence set
+  ConfidenceSet <- dataset[which(cumsum(dataset$ModWeight) <= cw1), ]
+    
+  #Create an empty matrix equivalent length to the confidence set
+  SpreadMatrix <- matrix(nrow = (nrow(ConfidenceSet)- 1), ncol = 2)
+  #Determine Euclidan distances between each model and the best model
+  for(i in 2:nrow(ConfidenceSet)){
+    SpreadMatrix[i - 1, 1] <- i
+    SpreadMatrix[i - 1, 2] <- sqrt((ConfidenceSet$WindowOpen[1] - ConfidenceSet$WindowOpen[i])^2 + 
+                               (ConfidenceSet$WindowClose[1] - ConfidenceSet$WindowClose[i])^2)
+  }
+  #Determine the maximum Euclidian distance
+  WeightSpread <- ceiling(max(SpreadMatrix[, 2]))
+  #N.B. This metric is currently not used in our code
   
   #Order models by weight#
   dataset        <- dataset[order(-dataset$ModWeight), ]
@@ -44,18 +68,60 @@ plotweights <- function(dataset, cw1 = 0.95, cw2 = 0.5, cw3 = 0.25){
   dataset$cw.full[which(dataset$cw.full == 0)] <- 1
   
 with(dataset, {
-  ggplot(dataset, aes(x = WindowClose, y = WindowOpen, z = cw.full))+
-    geom_tile(aes(fill = cw.full))+
-    scale_fill_gradientn(colours = c("black", "white"), breaks=c(b[1], b[2], b[3]), limits = c(0, 1), name = "")+
-    theme_classic()+
-    theme(panel.grid.major = element_blank(),
-          panel.grid.minor = element_blank(),
-          axis.line = element_line(size = 0.25, colour = "black"),
-          plot.title = element_text(size = 16),
-          legend.position = c(0.75, 0.3))+
-    ggtitle(paste(100*cw, "% cumulative model weight\n", WeightDist, "% of total models"))+
-    ylab("Window open")+
-    xlab("Window close")
+  if(arrow == FALSE){
+    ARR <- ggplot(dataset, aes(x = WindowClose, y = WindowOpen, z = cw.full))+
+      geom_tile(aes(fill = cw.full))+
+      scale_fill_gradientn(colours = c("black", "white"), breaks=c(b[1], b[2], b[3]), limits = c(0, 1), name = "")+
+      theme_classic()+
+      theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_line(size = 0.25, colour = "black"),
+            plot.title = element_text(size = 16),
+            legend.position = c(0.75, 0.3),
+            panel.border = element_rect(colour = "black", fill = NA))+
+      ggtitle(paste(WeightDist, "% of models fall within the \n", 100*cw, "% confidence set", sep = ""))+
+      ylab("Window open")+
+      xlab("Window close")
+    
+    if(plotall == TRUE){
+      plotallenv$cw <- ARR
+    } else {
+      ARR
+    }
+    
+  } else if(arrow == TRUE){
+    
+    CIRC <- circle(centre = c(dataset$WindowClose[1], dataset$WindowOpen[1]), diameter = 5, npoints = 1000)
+    colnames(CIRC) <- c("WindowClose", "WindowOpen")
+    CIRC$cw.full <- 0
+    
+    ARR <- ggplot(dataset, aes(x = WindowClose, y = WindowOpen, z = cw.full))+
+      geom_tile(aes(fill = cw.full))+
+      scale_fill_gradientn(colours = c("black", "white"), breaks=c(b[1], b[2], b[3]), limits = c(0, 1), name = "")+
+      theme_classic()+
+      theme(panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            axis.line = element_line(size = 0.25, colour = "black"),
+            plot.title = element_text(size = 16),
+            legend.position = c(0.75, 0.3),
+            panel.border = element_rect(colour = "black", fill = NA))+
+      ggtitle(paste(WeightDist, "% of models fall within the \n", 100*cw, "% confidence set", sep = ""))+
+      ylab("Window open")+
+      xlab("Window close")+
+      geom_path(data = CIRC, aes(x = WindowClose, y = WindowOpen), size = 1.2, colour = "black")+
+      geom_segment(aes(x = WindowClose[1], y = 0, xend = WindowClose[1], yend = (WindowOpen[1] - 2.5)), 
+                   size = 1, linetype = "dashed") +
+      geom_segment(aes(x = 0, y = WindowOpen[1], xend = (WindowClose[1] - 2.5), yend = WindowOpen[1]),
+                   size = 1, linetype = "dashed")
+    
+    if(plotall == TRUE){
+      plotallenv$cw <- ARR
+    } else {
+      ARR
+    }
+    
+  }
+
 }
 )  
 }

@@ -1,8 +1,6 @@
 # Test loglik functions G and W #
 
-# Test GEV function #
-# Test that deltaAICc output is not NA #
-# Test that deltaAICc is less than 0 #
+# Test GEV function
 test_that("GEV loglik test", {
   
   data(Mass, envir = environment())
@@ -25,7 +23,7 @@ test_that("GEV loglik test", {
   funcenv$par_location <- list()
   
   cont <- convertdate(bdate = bdate, cdate = cdate, xvar = xvar, 
-                      cinterval = "day", type = "variable")   # create new climate dataframe with continuous daynumbers, leap days are not a problem 
+                      cinterval = "day", type = "variable", spatial = NULL)   # create new climate dataframe with continuous daynumbers, leap days are not a problem 
   
   for (i in 1:length(bdate)){
     for (j in closest:furthest){
@@ -42,14 +40,15 @@ test_that("GEV loglik test", {
                       duration = duration, cmatrix = cmatrix, 
                       nullmodel = nullmodel, funcenv = funcenv)
   
+  # Test that modloglik_G produces a deltaAIC output
   expect_false(is.na(test))
+  
+  # Test that the output is less than 2 (i.e. AIC value is reasonable)
   expect_true(test <= 2)
   
 })
 
 # Test Weibull function #
-# Test that deltaAICc output is not NA #
-# Test that deltaAICc is less than 0 #
 test_that("Weibull loglik test", {
   
   data(Mass, envir = environment())
@@ -72,7 +71,7 @@ test_that("Weibull loglik test", {
   funcenv$par_location <- list()
   
   cont <- convertdate(bdate = bdate, cdate = cdate, xvar = xvar, 
-                      cinterval = "day", type = "variable")   # create new climate dataframe with continuous daynumbers, leap days are not a problem 
+                      cinterval = "day", type = "variable", spatial = NULL)   # create new climate dataframe with continuous daynumbers, leap days are not a problem 
   
   for (i in 1:length(bdate)){
     for (j in closest:furthest){
@@ -89,7 +88,10 @@ test_that("Weibull loglik test", {
                       duration = duration, cmatrix = cmatrix, 
                       nullmodel = nullmodel, funcenv = funcenv)
   
+  # Test that weibull produces an output
   expect_false(is.na(test))
+  
+  # Test that deltaAICc value is less than 2
   expect_true(test <= 2)
   
 })

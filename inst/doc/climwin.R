@@ -1,27 +1,27 @@
-## ------------------------------------------------------------------------
+## ---- message = FALSE----------------------------------------------------
 library(climwin)
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  
-#  MassWin <- climatewin(xvar = list(Temp = MassClimate$Temp),
+#  MassWin <- slidingwin(xvar = list(Temp = MassClimate$Temp),
 #                        cdate = MassClimate$Date,
 #                        bdate = Mass$Date,
 #                        baseline = lm(Mass ~ 1, data = Mass),
 #                        cinterval = "day",
-#                        furthest = 100, closest = 0,
-#                        type = "fixed", cutoff.day = 20, cutoff.month = 05,
+#                        range = c(150, 0),
+#                        type = "absolute", refday = c(20, 05),
 #                        stat = "mean",
 #                        func = "lin")
 #  
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  
-#  head(MassWin[[1]]$Dataset)
+#      head(MassWin[[1]]$Dataset)
 #  
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  
-#  MassWin[[1]]$BestModel
+#      MassWin[[1]]$BestModel
 #  
 
 ## ---- eval = FALSE-------------------------------------------------------
@@ -36,7 +36,7 @@ library(climwin)
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  
-#  head(MassWin[[1]]$BestModelData)
+#      head(MassWin[[1]]$BestModelData)
 #  
 
 ## ---- fig.width = 4, fig.height = 4--------------------------------------
@@ -62,12 +62,12 @@ plotbetas(dataset = MassOutput)
 #                      bdate = Mass$Date,
 #                      baseline = lm(Mass ~ 1, data = Mass),
 #                      cinterval = "day",
-#                      furthest = 100, closest = 0,
-#                      type = "fixed", cutoff.day = 20, cutoff.month = 05,
+#                      range = c(150, 0),
+#                      type = "absolute", refday = c(20, 5),
 #                      stat = "mean",
 #                      func = "lin")
 
-## ---- fig.width = 4, fig.height = 4--------------------------------------
+## ---- fig.width = 4, fig.height = 4, message = FALSE---------------------
 
 plothist(dataset = MassOutput, datasetrand = MassRand)
 
@@ -84,12 +84,12 @@ MassSingle <- singlewin(xvar = list(Temp = MassClimate$Temp),
                         bdate = Mass$Date,
                         baseline = lm(Mass ~ 1, data = Mass),
                         cinterval = "day",
-                        furthest = 72, closest = 15,
-                        type = "fixed", cutoff.day = 20, cutoff.month = 05,
+                        range = c(72, 15),
+                        type = "absolute", refday = c(20, 5),
                         stat = "mean",
                         func = "lin")
 
-## ---- fig.width = 4, fig.height = 4--------------------------------------
+## ---- fig.width = 6, fig.height = 6--------------------------------------
 
 plotbest(dataset = MassOutput,
          bestmodel = MassSingle$BestModel, 
@@ -106,13 +106,13 @@ plotall(dataset = MassOutput,
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  
-#  MassWin2 <- climatewin(xvar = list(Temp = MassClimate$Temp),
+#  MassWin2 <- slidingwin(xvar = list(Temp = MassClimate$Temp),
 #                         cdate = MassClimate$Date,
 #                         bdate = Mass$Date,
 #                         baseline = lm(Mass ~ 1, data = Mass),
 #                         cinterval = "day",
-#                         furthest = 100, closest = 0,
-#                         type = "fixed", cutoff.day = 20, cutoff.month = 05,
+#                         range = c(150, 0),
+#                         type = "absolute", refday = c(20, 5),
 #                         stat = c("max", "mean"),
 #                         func = c("lin", "quad"))
 #  
