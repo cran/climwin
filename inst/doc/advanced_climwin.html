@@ -1,613 +1,765 @@
 <!DOCTYPE html>
-
-<html xmlns="http://www.w3.org/1999/xhtml">
-
+<html>
 <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-<meta charset="utf-8">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="generator" content="pandoc" />
+<title>Climate thresholds</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
 
-<meta name="author" content="Liam D. Bailey and Martijn van de Pol" />
-
-<meta name="date" content="2016-06-01" />
-
-<title>Advanced climwin</title>
-
-
-
-<style type="text/css">code{white-space: pre;}</style>
+<!-- Styles for R syntax highlighter -->
 <style type="text/css">
-div.sourceCode { overflow-x: auto; }
-table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
-  margin: 0; padding: 0; vertical-align: baseline; border: none; }
-table.sourceCode { width: 100%; line-height: 100%; }
-td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
-td.sourceCode { padding-left: 5px; }
-code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
-code > span.dt { color: #902000; } /* DataType */
-code > span.dv { color: #40a070; } /* DecVal */
-code > span.bn { color: #40a070; } /* BaseN */
-code > span.fl { color: #40a070; } /* Float */
-code > span.ch { color: #4070a0; } /* Char */
-code > span.st { color: #4070a0; } /* String */
-code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
-code > span.ot { color: #007020; } /* Other */
-code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
-code > span.fu { color: #06287e; } /* Function */
-code > span.er { color: #ff0000; font-weight: bold; } /* Error */
-code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
-code > span.cn { color: #880000; } /* Constant */
-code > span.sc { color: #4070a0; } /* SpecialChar */
-code > span.vs { color: #4070a0; } /* VerbatimString */
-code > span.ss { color: #bb6688; } /* SpecialString */
-code > span.im { } /* Import */
-code > span.va { color: #19177c; } /* Variable */
-code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
-code > span.op { color: #666666; } /* Operator */
-code > span.bu { } /* BuiltIn */
-code > span.ex { } /* Extension */
-code > span.pp { color: #bc7a00; } /* Preprocessor */
-code > span.at { color: #7d9029; } /* Attribute */
-code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
-code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
-code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
-code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+<!-- MathJax scripts -->
+<script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+</script>
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
 </style>
 
 
 
-<link href="data:text/css;charset=utf-8,body%20%7B%0Abackground%2Dcolor%3A%20%23fff%3B%0Amargin%3A%201em%20auto%3B%0Amax%2Dwidth%3A%20700px%3B%0Aoverflow%3A%20visible%3B%0Apadding%2Dleft%3A%202em%3B%0Apadding%2Dright%3A%202em%3B%0Afont%2Dfamily%3A%20%22Open%20Sans%22%2C%20%22Helvetica%20Neue%22%2C%20Helvetica%2C%20Arial%2C%20sans%2Dserif%3B%0Afont%2Dsize%3A%2014px%3B%0Aline%2Dheight%3A%201%2E35%3B%0A%7D%0A%23header%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0A%23TOC%20%7B%0Aclear%3A%20both%3B%0Amargin%3A%200%200%2010px%2010px%3B%0Apadding%3A%204px%3B%0Awidth%3A%20400px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Aborder%2Dradius%3A%205px%3B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Afont%2Dsize%3A%2013px%3B%0Aline%2Dheight%3A%201%2E3%3B%0A%7D%0A%23TOC%20%2Etoctitle%20%7B%0Afont%2Dweight%3A%20bold%3B%0Afont%2Dsize%3A%2015px%3B%0Amargin%2Dleft%3A%205px%3B%0A%7D%0A%23TOC%20ul%20%7B%0Apadding%2Dleft%3A%2040px%3B%0Amargin%2Dleft%3A%20%2D1%2E5em%3B%0Amargin%2Dtop%3A%205px%3B%0Amargin%2Dbottom%3A%205px%3B%0A%7D%0A%23TOC%20ul%20ul%20%7B%0Amargin%2Dleft%3A%20%2D2em%3B%0A%7D%0A%23TOC%20li%20%7B%0Aline%2Dheight%3A%2016px%3B%0A%7D%0Atable%20%7B%0Amargin%3A%201em%20auto%3B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dcolor%3A%20%23DDDDDD%3B%0Aborder%2Dstyle%3A%20outset%3B%0Aborder%2Dcollapse%3A%20collapse%3B%0A%7D%0Atable%20th%20%7B%0Aborder%2Dwidth%3A%202px%3B%0Apadding%3A%205px%3B%0Aborder%2Dstyle%3A%20inset%3B%0A%7D%0Atable%20td%20%7B%0Aborder%2Dwidth%3A%201px%3B%0Aborder%2Dstyle%3A%20inset%3B%0Aline%2Dheight%3A%2018px%3B%0Apadding%3A%205px%205px%3B%0A%7D%0Atable%2C%20table%20th%2C%20table%20td%20%7B%0Aborder%2Dleft%2Dstyle%3A%20none%3B%0Aborder%2Dright%2Dstyle%3A%20none%3B%0A%7D%0Atable%20thead%2C%20table%20tr%2Eeven%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Ap%20%7B%0Amargin%3A%200%2E5em%200%3B%0A%7D%0Ablockquote%20%7B%0Abackground%2Dcolor%3A%20%23f6f6f6%3B%0Apadding%3A%200%2E25em%200%2E75em%3B%0A%7D%0Ahr%20%7B%0Aborder%2Dstyle%3A%20solid%3B%0Aborder%3A%20none%3B%0Aborder%2Dtop%3A%201px%20solid%20%23777%3B%0Amargin%3A%2028px%200%3B%0A%7D%0Adl%20%7B%0Amargin%2Dleft%3A%200%3B%0A%7D%0Adl%20dd%20%7B%0Amargin%2Dbottom%3A%2013px%3B%0Amargin%2Dleft%3A%2013px%3B%0A%7D%0Adl%20dt%20%7B%0Afont%2Dweight%3A%20bold%3B%0A%7D%0Aul%20%7B%0Amargin%2Dtop%3A%200%3B%0A%7D%0Aul%20li%20%7B%0Alist%2Dstyle%3A%20circle%20outside%3B%0A%7D%0Aul%20ul%20%7B%0Amargin%2Dbottom%3A%200%3B%0A%7D%0Apre%2C%20code%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0Aborder%2Dradius%3A%203px%3B%0Acolor%3A%20%23333%3B%0Awhite%2Dspace%3A%20pre%2Dwrap%3B%20%0A%7D%0Apre%20%7B%0Aborder%2Dradius%3A%203px%3B%0Amargin%3A%205px%200px%2010px%200px%3B%0Apadding%3A%2010px%3B%0A%7D%0Apre%3Anot%28%5Bclass%5D%29%20%7B%0Abackground%2Dcolor%3A%20%23f7f7f7%3B%0A%7D%0Acode%20%7B%0Afont%2Dfamily%3A%20Consolas%2C%20Monaco%2C%20%27Courier%20New%27%2C%20monospace%3B%0Afont%2Dsize%3A%2085%25%3B%0A%7D%0Ap%20%3E%20code%2C%20li%20%3E%20code%20%7B%0Apadding%3A%202px%200px%3B%0A%7D%0Adiv%2Efigure%20%7B%0Atext%2Dalign%3A%20center%3B%0A%7D%0Aimg%20%7B%0Abackground%2Dcolor%3A%20%23FFFFFF%3B%0Apadding%3A%202px%3B%0Aborder%3A%201px%20solid%20%23DDDDDD%3B%0Aborder%2Dradius%3A%203px%3B%0Aborder%3A%201px%20solid%20%23CCCCCC%3B%0Amargin%3A%200%205px%3B%0A%7D%0Ah1%20%7B%0Amargin%2Dtop%3A%200%3B%0Afont%2Dsize%3A%2035px%3B%0Aline%2Dheight%3A%2040px%3B%0A%7D%0Ah2%20%7B%0Aborder%2Dbottom%3A%204px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Apadding%2Dbottom%3A%202px%3B%0Afont%2Dsize%3A%20145%25%3B%0A%7D%0Ah3%20%7B%0Aborder%2Dbottom%3A%202px%20solid%20%23f7f7f7%3B%0Apadding%2Dtop%3A%2010px%3B%0Afont%2Dsize%3A%20120%25%3B%0A%7D%0Ah4%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23f7f7f7%3B%0Amargin%2Dleft%3A%208px%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Ah5%2C%20h6%20%7B%0Aborder%2Dbottom%3A%201px%20solid%20%23ccc%3B%0Afont%2Dsize%3A%20105%25%3B%0A%7D%0Aa%20%7B%0Acolor%3A%20%230033dd%3B%0Atext%2Ddecoration%3A%20none%3B%0A%7D%0Aa%3Ahover%20%7B%0Acolor%3A%20%236666ff%3B%20%7D%0Aa%3Avisited%20%7B%0Acolor%3A%20%23800080%3B%20%7D%0Aa%3Avisited%3Ahover%20%7B%0Acolor%3A%20%23BB00BB%3B%20%7D%0Aa%5Bhref%5E%3D%22http%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0Aa%5Bhref%5E%3D%22https%3A%22%5D%20%7B%0Atext%2Ddecoration%3A%20underline%3B%20%7D%0A%0Acode%20%3E%20span%2Ekw%20%7B%20color%3A%20%23555%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Edt%20%7B%20color%3A%20%23902000%3B%20%7D%20%0Acode%20%3E%20span%2Edv%20%7B%20color%3A%20%2340a070%3B%20%7D%20%0Acode%20%3E%20span%2Ebn%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Efl%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Ech%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Est%20%7B%20color%3A%20%23d14%3B%20%7D%20%0Acode%20%3E%20span%2Eco%20%7B%20color%3A%20%23888888%3B%20font%2Dstyle%3A%20italic%3B%20%7D%20%0Acode%20%3E%20span%2Eot%20%7B%20color%3A%20%23007020%3B%20%7D%20%0Acode%20%3E%20span%2Eal%20%7B%20color%3A%20%23ff0000%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%0Acode%20%3E%20span%2Efu%20%7B%20color%3A%20%23900%3B%20font%2Dweight%3A%20bold%3B%20%7D%20%20code%20%3E%20span%2Eer%20%7B%20color%3A%20%23a61717%3B%20background%2Dcolor%3A%20%23e3d2d2%3B%20%7D%20%0A" rel="stylesheet" type="text/css" />
-
 </head>
 
 <body>
-
-
-
-
-<h1 class="title toc-ignore">Advanced climwin</h1>
-<h4 class="author"><em>Liam D. Bailey and Martijn van de Pol</em></h4>
-<h4 class="date"><em>2016-06-01</em></h4>
-
-
-
 <p>In the previous vignette we described the basic features available in the <code>climwin</code> package. Below, we will look in more detail at more advanced features available to users. We will cover:</p>
+
 <ul>
 <li><p>Testing for climate thresholds.</p></li>
 <li><p>Dealing with data records that encompass multiple years.</p></li>
 <li><p>Carrying out spatial replication.</p></li>
 <li><p>Fitting more complex curves to climate window data using <code>weightwin</code>.</p></li>
 </ul>
-<hr />
-<div id="climate-thresholds" class="section level2">
+
+<hr/>
+
 <h2>Climate thresholds</h2>
+
 <p>Many studies, may be interested in testing climate windows using climatic thresholds. When testing climatic thresholds, we assume that a biological response is driven by the total numbers of days that surpass a particular climatic value. For example, seed germination may be influenced by the number of days over 30 degrees. Alternatively, temperature may only influence organism survival when temperatures fall below freezing. A common example of such a climate threshold is the using of growing degree days in plant studies.</p>
-<p>Statistics like these can be achieved in <code>slidingwin</code> using the three parameters ‘upper’, ‘lower’ and, ‘binary’. When a value is provided for the parameter ‘upper’, <code>slidingwin</code> will create a new climate dataset where all values equal to or below this threshold are set at 0. Similarly, when a value is set for ‘lower’, all values equal to or above this threshold will be set at 0. When values are provided for both ‘upper’ and ‘lower’, all values that fall <em>between</em> these two threshold will be set at 0.</p>
+
+<p>Statistics like these can be achieved in <code>slidingwin</code> using the three parameters &#39;upper&#39;, &#39;lower&#39; and, &#39;binary&#39;. When a value is provided for the parameter &#39;upper&#39;, <code>slidingwin</code> will create a new climate dataset where all values equal to or below this threshold are set at 0. Similarly, when a value is set for &#39;lower&#39;, all values equal to or above this threshold will be set at 0. When values are provided for both &#39;upper&#39; and &#39;lower&#39;, all values that fall <em>between</em> these two threshold will be set at 0.</p>
+
 <p><code>upper = 30</code></p>
-<table>
-<thead>
-<tr class="header">
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Original temperature</th>
 <th align="center">Threshold temperature</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">01/06/2015</td>
 <td align="center">25.9</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">02/06/2015</td>
 <td align="center">24.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">03/06/2015</td>
 <td align="center">32.5</td>
 <td align="center">32.5</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">04/06/2014</td>
 <td align="center">28.1</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">05/06/2014</td>
 <td align="center">30.5</td>
 <td align="center">30.5</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">06/06/2014</td>
 <td align="center">30.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">07/06/2014</td>
 <td align="center">31.2</td>
 <td align="center">31.2</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">08/06/2014</td>
 <td align="center">27.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
-<td align="center">…</td>
-<td align="center">…</td>
-<td align="center">…</td>
+<tr>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
 </tr>
-</tbody>
-</table>
-<p><code>upper = 30</code> <code>lower = 25</code></p>
-<table>
-<thead>
-<tr class="header">
+</tbody></table>
+
+<p><code>upper = 30</code>
+<code>lower = 25</code></p>
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Original temperature</th>
 <th align="center">Threshold temperature</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">01/06/2015</td>
 <td align="center">25.9</td>
 <td align="center">25.9</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">02/06/2015</td>
 <td align="center">24.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">03/06/2015</td>
 <td align="center">32.5</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">04/06/2014</td>
 <td align="center">28.1</td>
 <td align="center">28.1</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">05/06/2014</td>
 <td align="center">30.5</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">06/06/2014</td>
 <td align="center">30.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">07/06/2014</td>
 <td align="center">31.2</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">08/06/2014</td>
 <td align="center">27.0</td>
 <td align="center">27.0</td>
 </tr>
-<tr class="odd">
-<td align="center">…</td>
-<td align="center">…</td>
-<td align="center">…</td>
+<tr>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
 </tr>
-</tbody>
-</table>
-<p>In some circumstances we may assume that all values past the climatic threshold will have an equally large impact of the biological response. In this case, we would set ‘binary’ to TRUE so that all non-zero values are set at 1. By default however, ‘binary’ will be set at FALSE, so that all values past the climatic threshold keep their original value.</p>
-<p><code>upper = 30</code> <code>binary = TRUE</code></p>
-<table>
-<thead>
-<tr class="header">
+</tbody></table>
+
+<p>In some circumstances we may assume that all values past the climatic threshold will have an equally large impact of the biological response. In this case, we would set &#39;binary&#39; to TRUE so that all non-zero values are set at 1. By default however, &#39;binary&#39; will be set at FALSE, so that all values past the climatic threshold keep their original value.</p>
+
+<p><code>upper = 30</code>
+<code>binary = TRUE</code></p>
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Original temperature</th>
 <th align="center">Threshold temperature</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">01/06/2015</td>
 <td align="center">25.9</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">02/06/2015</td>
 <td align="center">24.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">03/06/2015</td>
 <td align="center">32.5</td>
 <td align="center">1</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">04/06/2014</td>
 <td align="center">28.1</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">05/06/2014</td>
 <td align="center">30.5</td>
 <td align="center">1</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">06/06/2014</td>
 <td align="center">30.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">07/06/2014</td>
 <td align="center">31.2</td>
 <td align="center">1</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">08/06/2014</td>
 <td align="center">27.0</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
-<td align="center">…</td>
-<td align="center">…</td>
-<td align="center">…</td>
+<tr>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
 </tr>
-</tbody>
-</table>
-<div id="a-worked-example" class="section level3">
+</tbody></table>
+
 <h3>A worked example</h3>
-<p>Below we will provide a worked example using the <code>Mass</code> and <code>MassClimate</code> dataset. In this example, lets imagine we are interested in testing the impact of the number of days above freezing on our mass response variable. To do this we would set both our ‘upper’ and ‘binary’ parameters.</p>
-<p><code>upper = 0</code> <code>binary = TRUE</code></p>
-<p>As we are interested in measuring the <em>number</em> of days above freezing, we set our stat parameter to ‘sum’. Otherwise, we used model parameter values identical to our earlier vignette.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(climwin)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MassWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate$Temp),
-                      <span class="dt">cdate =</span> MassClimate$Date,
-                      <span class="dt">bdate =</span> Mass$Date,
-                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Mass),
-                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,
-                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),
-                      <span class="dt">upper =</span> <span class="dv">0</span>, <span class="dt">binary =</span> <span class="ot">TRUE</span>,
-                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),
-                      <span class="dt">stat =</span> <span class="st">&quot;sum&quot;</span>,
-                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</code></pre></div>
+
+<p>Below we will provide a worked example using the <code>Mass</code> and <code>MassClimate</code> dataset. In this example, lets imagine we are interested in testing the impact of the number of days above freezing on our mass response variable. To do this we would set both our &#39;upper&#39; and &#39;binary&#39; parameters.</p>
+
+<p><code>upper = 0</code>
+<code>binary = TRUE</code></p>
+
+<p>As we are interested in measuring the <em>number</em> of days above freezing, we set our stat parameter to &#39;sum&#39;. Otherwise, we used model parameter values identical to our earlier vignette.</p>
+
+<pre><code class="r">library(climwin)
+</code></pre>
+
+<pre><code class="r">MassWin &lt;- slidingwin(xvar = list(Temp = MassClimate$Temp),
+                      cdate = MassClimate$Date,
+                      bdate = Mass$Date,
+                      baseline = lm(Mass ~ 1, data = Mass),
+                      cinterval = &quot;day&quot;,
+                      range = c(150, 0),
+                      upper = 0, binary = TRUE,
+                      type = &quot;absolute&quot;, refday = c(20, 05),
+                      stat = &quot;sum&quot;,
+                      func = &quot;lin&quot;)
+</code></pre>
+
 <p>When we examine the best model data, we can see that our climate data is now count data.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    <span class="kw">head</span>(MassWin[[<span class="dv">1</span>]]$BestModelData)</code></pre></div>
-<table>
-<thead>
-<tr class="header">
+
+<pre><code class="r">    head(MassWin[[1]]$BestModelData)
+</code></pre>
+
+<table><thead>
+<tr>
 <th align="center">Yvar</th>
 <th align="center">climate</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">140</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">138</td>
 <td align="center">0</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">136</td>
 <td align="center">1</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">135</td>
 <td align="center">2</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">134</td>
 <td align="center">0</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">134</td>
 <td align="center">0</td>
 </tr>
-</tbody>
-</table>
-<hr />
-</div>
-</div>
-<div id="biological-measurments-that-encompass-two-years" class="section level2">
+</tbody></table>
+
+<hr/>
+
 <h2>Biological measurments that encompass two years</h2>
-<p>Many long-term datasets that will be suitable for <code>climwin</code> are likely to be measured during Northern hemisphere spring/summer (e.g. breeding data). These biological records are measured during the middle of the year, meaning that biological records can be easily grouped by year. Yet in other circumstances biological measurements will fall across two years, particularly in Southern hemisphere species where spring/summer falls across the new year period [e.g., <a href="http://www.journals.uchicago.edu/doi/abs/10.1086/659101">1</a>].</p>
-<p>This can cause issues when fitting ‘absolute’ climate windows. As described in the introductory vignette, ‘absolute’ windows will use a set reference day for all biological records. Where biological measurements cross two years however, measurements from the same season can be split up. In the table below, where a reference day of November 1st is used, all those measurements taken at the start of the breeding season are given a date of November 1st 2014 while all values following the new year are set at November 1st 2015. This is obviously unrealistic, as biological measurements in January 2015 cannot be impacted by climatic conditions that occured 11 months later.</p>
-<table>
-<thead>
-<tr class="header">
+
+<p>Many long-term datasets that will be suitable for <code>climwin</code> are likely to be measured during Northern hemisphere spring/summer (e.g. breeding data). These biological records are measured during the middle of the year, meaning that biological records can be easily grouped by year. Yet in other circumstances biological measurements will fall across two years, particularly in Southern hemisphere species where spring/summer falls across the new year period [e.g., <a href="http://www.journals.uchicago.edu/doi/abs/10.1086/659101">1</a>].</p>
+
+<p>This can cause issues when fitting &#39;absolute&#39; climate windows. As described in the introductory vignette, &#39;absolute&#39; windows will use a set reference day for all biological records. Where biological measurements cross two years however, measurements from the same season can be split up. In the table below, where a reference day of November 1st is used, all those measurements taken at the start of the breeding season are given a date of November 1st 2014 while all values following the new year are set at November 1st 2015. This is obviously unrealistic, as biological measurements in January 2015 cannot be impacted by climatic conditions that occured 11 months later.</p>
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Reference Date</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">05/11/2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">10/11/2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">01/12/2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">12/12/2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">01/01/2015</td>
 <td align="center">01/11/2015</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">07/01/2015</td>
 <td align="center">01/11/2015</td>
 </tr>
-</tbody>
-</table>
-<p>As a solution, <code>climwin</code> includes a ‘cohort’ parameter that allows users to specify which biological measurements should be grouped together (e.g. when they are from same breeding season). Each biological record should be given a cohort level (see below), which is taken into account when setting the reference day for climate window analyses.</p>
-<table>
-<thead>
-<tr class="header">
+</tbody></table>
+
+<p>As a solution, <code>climwin</code> includes a &#39;cohort&#39; parameter that allows users to specify which biological measurements should be grouped together (e.g. when they are from same breeding season). Each biological record should be given a cohort level (see below), which is taken into account when setting the reference day for climate window analyses.</p>
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Cohort</th>
 <th align="center">Reference Date</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">05/11/2014</td>
 <td align="center">2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">10/11/2014</td>
 <td align="center">2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">01/12/2014</td>
 <td align="center">2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">12/12/2014</td>
 <td align="center">2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">01/01/2015</td>
 <td align="center">2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">07/01/2015</td>
 <td align="center">2014</td>
 <td align="center">01/11/2014</td>
 </tr>
-</tbody>
-</table>
-<hr />
-</div>
-<div id="spatial-replication" class="section level2">
+</tbody></table>
+
+<hr/>
+
 <h2>Spatial replication</h2>
+
 <p>To detect climate signals using <code>climwin</code> can often require large amounts of data, particularly if the relationship between climate and biological response is weak [<a href="http://onlinelibrary.wiley.com/doi/10.1111/2041-210X.12590/full">2</a>]. To obtain the required data through temporal replication can require the collection of data over multiple years, often decades; however, spatial replication may also allow users to expand their sample size over a shorter period by collecting data from multiple sites/populations.</p>
+
 <p>Using spatial replication assumes that the relationship between the biological response and climatic predictor is consistent across the different measured populations. Where this assumption is valid, spatial replication can help expand the amount of data available for <code>climwin</code> analyses.</p>
-<div id="a-worked-example-1" class="section level3">
+
 <h3>A worked example</h3>
-<p>Spatially replicated data can be analysed using the <code>slidingwin</code> function with the addition of the ‘spatial’ parameter. As with regular <code>slidingwin</code> analysis, analysis with spatial replication requires a separate biological and climate dataset. However, these datasets should now contain an additional variable which specifies the site at which biological and climate data was collected. Below, we have called this parameter ‘SiteID’.</p>
-<table>
-<thead>
-<tr class="header">
+
+<p>Spatially replicated data can be analysed using the <code>slidingwin</code> function with the addition of the &#39;spatial&#39; parameter. As with regular <code>slidingwin</code> analysis, analysis with spatial replication requires a separate biological and climate dataset. However, these datasets should now contain an additional variable which specifies the site at which biological and climate data was collected. Below, we have called this parameter &#39;SiteID&#39;.</p>
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Mass (g)</th>
 <th align="center">SiteID</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">04/06/2015</td>
 <td align="center">120</td>
 <td align="center">A</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">05/06/2015</td>
 <td align="center">123</td>
 <td align="center">A</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">07/06/2015</td>
 <td align="center">110</td>
 <td align="center">B</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">07/06/2015</td>
 <td align="center">140</td>
 <td align="center">A</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">06/06/2015</td>
 <td align="center">138</td>
 <td align="center">B</td>
 </tr>
-<tr class="even">
-<td align="center">…</td>
-<td align="center">…</td>
-<td align="center">…</td>
+<tr>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
 </tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr class="header">
+</tbody></table>
+
+<table><thead>
+<tr>
 <th align="center">Date</th>
 <th align="center">Temperature</th>
 <th align="center">SiteID</th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">01/06/2015</td>
 <td align="center">15</td>
 <td align="center">A</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">02/06/2015</td>
 <td align="center">16</td>
 <td align="center">A</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">03/06/2015</td>
 <td align="center">12</td>
 <td align="center">A</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">04/06/2015</td>
 <td align="center">18</td>
 <td align="center">A</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">05/06/2015</td>
 <td align="center">20</td>
 <td align="center">A</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">06/06/2015</td>
 <td align="center">23</td>
 <td align="center">A</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">07/06/2015</td>
 <td align="center">21</td>
 <td align="center">A</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">01/06/2015</td>
 <td align="center">10</td>
 <td align="center">B</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">02/06/2015</td>
 <td align="center">12</td>
 <td align="center">B</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">03/06/2015</td>
 <td align="center">9</td>
 <td align="center">B</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">04/06/2015</td>
 <td align="center">5</td>
 <td align="center">B</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">05/06/2015</td>
 <td align="center">13</td>
 <td align="center">B</td>
 </tr>
-<tr class="odd">
+<tr>
 <td align="center">06/06/2015</td>
 <td align="center">10</td>
 <td align="center">B</td>
 </tr>
-<tr class="even">
+<tr>
 <td align="center">07/06/2015</td>
 <td align="center">11</td>
 <td align="center">B</td>
 </tr>
-<tr class="odd">
-<td align="center">…</td>
-<td align="center">…</td>
-<td align="center">…</td>
+<tr>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
+<td align="center">&hellip;</td>
 </tr>
-</tbody>
-</table>
+</tbody></table>
+
 <p><em>NOTE: The climate dataset for spatially replicated <code>climwin</code> analysis will often include duplication of dates. In a regular <code>climwin</code> analysis this will lead to errors.</em></p>
-<p>With these new datasets, we can carry out a <code>slidingwin</code> analysis with the addition of a ‘spatial’ parameter.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">MassWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> Climate$Temp),
-                      <span class="dt">cdate =</span> Climate$Date,
-                      <span class="dt">bdate =</span> Biol$Date,
-                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Biol),
-                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,
-                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),
-                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),
-                      <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,
-                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>, <span class="dt">spatial =</span> <span class="kw">list</span>(Biol$SiteID, Climate$SiteID))</code></pre></div>
-<p>The ‘spatial’ parameter is a list item that includes the SiteID variable for the biological and climate datasets respectively. When <code>slidingwin</code> fits individual climate windows, climate data will be subset so that each biological record will be matched with the corresponding climate data.</p>
-<hr />
-</div>
-</div>
-<div id="weightwin-function" class="section level2">
+
+<p>With these new datasets, we can carry out a <code>slidingwin</code> analysis with the addition of a &#39;spatial&#39; parameter.</p>
+
+<pre><code class="r">MassWin &lt;- slidingwin(xvar = list(Temp = Climate$Temp),
+                      cdate = Climate$Date,
+                      bdate = Biol$Date,
+                      baseline = lm(Mass ~ 1, data = Biol),
+                      cinterval = &quot;day&quot;,
+                      range = c(150, 0),
+                      type = &quot;absolute&quot;, refday = c(20, 05),
+                      stat = &quot;mean&quot;,
+                      func = &quot;lin&quot;, spatial = list(Biol$SiteID, Climate$SiteID))
+</code></pre>
+
+<p>The &#39;spatial&#39; parameter is a list item that includes the SiteID variable for the biological and climate datasets respectively. When <code>slidingwin</code> fits individual climate windows, climate data will be subset so that each biological record will be matched with the corresponding climate data.</p>
+
+<hr/>
+
 <h2><code>weightwin</code> function</h2>
+
 <p>When we run regular <code>slidingwin</code> analyses we assume that all days within the climate window are evenly weighted. While this is often a convenient assumption, this may be biologically unrealistic as we create a strict cut-off for when climate data is considered (see below).</p>
-<p><img src="data:image/png;base64,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" alt /><!-- --></p>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-5"/></p>
+
 <p>In certain cases we may be interested in looking for climate windows where the importance of climate decays slowly over time. The function <code>weightwin</code> allows users to fit either Weibull (below left) and generalised extreme value (GEV; below right) weight distributions to climate data.</p>
-<p><img src="data:image/png;base64,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" alt /><!-- --></p>
-<p>Instead of varying the start and end date of climate windows like <code>slidingwin</code>, <code>weightwin</code> instead uses an optimisation function to vary the shape, scale and location of either of these weight functions. Each weight function is then used to weight the climate data, which is then used to produce a climate model and delta AICc value. Therefore, although the method of optimising climate data is different, the ultimate output (i.e. <span class="math inline">\(\Delta AICc\)</span> of a climate window compared to a null model) is the same.</p>
-<div id="a-worked-example-2" class="section level3">
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-6"/></p>
+
+<p>Instead of varying the start and end date of climate windows like <code>slidingwin</code>, <code>weightwin</code> instead uses an optimisation function to vary the shape, scale and location of either of these weight functions. Each weight function is then used to weight the climate data, which is then used to produce a climate model and delta AICc value. Therefore, although the method of optimising climate data is different, the ultimate output (i.e. \(\Delta AICc\) of a climate window compared to a null model) is the same.</p>
+
 <h3>A worked example</h3>
+
 <p><code>weightwin</code> can often be useful to use with climate data where we have already identified a climate window using <code>slidingwin</code>. Here, we will use <code>weightwin</code> to further investigate the <code>Mass</code> and <code>MassClimate</code> data included with the <code>climwin</code> package.</p>
-<p>The basic parameters in <code>weightwin</code> are the same as <code>slidingwin</code> (though note the abscence of the ‘stat’ parameter). In addition however, we must designate which weight distribution we want to use. In this case we consider a Weibull function.</p>
+
+<p>The basic parameters in <code>weightwin</code> are the same as <code>slidingwin</code> (though note the abscence of the &#39;stat&#39; parameter). In addition however, we must designate which weight distribution we want to use. In this case we consider a Weibull function.</p>
+
 <p><code>weightfunc = &quot;W&quot;</code></p>
+
 <p>Next, we must set the location, scale and shape values for the starting distribution that will be used to begin the optimisation procedure. The default values (3, 0.2, 0) are often appropriate for fitting Weibull distributions. However, you can explore different parameter values using the <code>explore</code> function.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">weight &lt;-<span class="st"> </span><span class="kw">weightwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate$Temp), <span class="dt">cdate =</span> MassClimate$Date, 
-                    <span class="dt">bdate =</span> Mass$Date, 
-                    <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass ~<span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Mass), 
-                    <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>), 
-                    <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, 
-                    <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">5</span>), 
-                    <span class="dt">weightfunc =</span> <span class="st">&quot;W&quot;</span>, <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,
-                    <span class="dt">par =</span> <span class="kw">c</span>(<span class="dv">3</span>, <span class="fl">0.2</span>, <span class="dv">0</span>))</code></pre></div>
+
+<pre><code class="r">weight &lt;- weightwin(xvar = list(Temp = MassClimate$Temp), cdate = MassClimate$Date, 
+                    bdate = Mass$Date, 
+                    baseline = lm(Mass ~ 1, data = Mass), 
+                    range = c(150, 0), 
+                    func = &quot;lin&quot;, type = &quot;absolute&quot;, 
+                    refday = c(20, 5), 
+                    weightfunc = &quot;W&quot;, cinterval = &quot;day&quot;,
+                    par = c(3, 0.2, 0))
+</code></pre>
+
 <p>As part of the <code>weightwin</code> function a plot will be generated showing the progress of the optimisation function. Most of this information is useful for assessing the effectiveness of the optimisation function. For our purposes however, we will focus only on the final weighted window function (top left).</p>
-<p><img src="data:image/png;base64,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" alt /><!-- --></p>
-<p>In the above plot, we can see that the importance of temperature declines rapidly as we near May 20th. However, temperature later in time declines less rapidly. We can extract the <span class="math inline">\(\Delta AICc\)</span> value for this weight function below.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">weight$WeightedOutput$deltaAICc</code></pre></div>
+
+<p><img src="data:image/png;base64,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" alt="plot of chunk unnamed-chunk-8"/></p>
+
+<p>In the above plot, we can see that the importance of temperature declines rapidly as we near May 20th. However, temperature later in time declines less rapidly. We can extract the \(\Delta AICc\) value for this weight function below.</p>
+
+<pre><code class="r">weight$WeightedOutput$deltaAICc
+</code></pre>
+
 <p>If we compare this value to the delta AICc obtained from the <code>slidingwin</code> function we can see that the <code>weightwin</code> function is better able to explain variation in our mass parameter.</p>
-<table>
-<thead>
-<tr class="header">
+
+<table><thead>
+<tr>
 <th align="center"><code>slidingwin</code></th>
 <th align="center"><code>weightwin</code></th>
 </tr>
-</thead>
-<tbody>
-<tr class="odd">
+</thead><tbody>
+<tr>
 <td align="center">-64.81</td>
 <td align="center">-68.22</td>
 </tr>
-</tbody>
-</table>
-</div>
-<div id="pros-and-cons" class="section level3">
+</tbody></table>
+
 <h3>Pros and cons</h3>
-<p><code>weightwin</code> can provide greater detail on the relationship between climate and the biological response, such as the occurrence of exponential functions. Additionally, by using more diverse weight distributions, <code>weightwin</code> will often generate models with better <span class="math inline">\(\Delta AICc\)</span> values, which may be especially important when users are most interested in achieving high explanatory power. Furthermore, by using an optimisation routine <code>weightwin</code> often tests far fewer models than <code>slidingwin</code>, allowing for more rapid analysis.</p>
+
+<p><code>weightwin</code> can provide greater detail on the relationship between climate and the biological response, such as the occurrence of exponential functions. Additionally, by using more diverse weight distributions, <code>weightwin</code> will often generate models with better \(\Delta AICc\) values, which may be especially important when users are most interested in achieving high explanatory power. Furthermore, by using an optimisation routine <code>weightwin</code> often tests far fewer models than <code>slidingwin</code>, allowing for more rapid analysis.</p>
+
 <p>Despite these benefits, <code>weightwin</code> will not always be the most appropriate function for all scenarios. Firstly, the nature of the fitted weight distributions means that <code>weightwin</code> can only detect single climate signals, which forces users to detect and compare potential climate signals with separate analyses.</p>
+
 <p>Secondly, <code>weightwin</code> can be a more technical process. While the above example works easily, optimisation procedures can get stuck on false optima or fail to converge. In these cases, users may be required to test different starting parameters and adjust optimisation characteristics such as step size. Often this procedure can be inhibative for users with less technical knowledge.</p>
+
 <p>Finally, <code>weightwin</code> can only be used for testing mean climate, with no capacity to consider other aggregate statistics. Therefore, whether one chooses to use <code>weightwin</code> or <code>slidingwin</code> will largely depend on the summary statistic used, the level of detail desired, and the ones technical knowledge.</p>
-<hr />
+
+<hr/>
+
 <p>To ask additional questions or report bugs please e-mail:</p>
+
 <p><a href="mailto:liam.bailey@anu.edu.au">liam.bailey@anu.edu.au</a></p>
-</div>
-</div>
-
-
-
-<!-- dynamically load mathjax for compatibility with self-contained -->
-<script>
-  (function () {
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
-    document.getElementsByTagName("head")[0].appendChild(script);
-  })();
-</script>
 
 </body>
+
 </html>

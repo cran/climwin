@@ -33,10 +33,18 @@
 #'  (e.g. number of days before a set point in time).
 #'@param refday If type is "absolute", the day and month respectively of the 
 #'  year from which the absolute window analysis will start.
-#'@param cmissing TRUE or FALSE, determines what should be done if there are 
-#'  missing climate data. If FALSE, the function will not run if missing 
-#'  climate data is encountered. If TRUE, any records affected by missing 
-#'  climate data will be removed from climate window analysis.
+#'@param cmissing Determines what should be done if there are 
+#'  missing climate data. Three approaches are possible: 
+#'   - FALSE; the function will not run if missing climate data is encountered.
+#'   An object 'missing' will be returned containing the dates of missing climate.
+#'   - "method1"; missing climate data will be replaced with the mean climate
+#'   of the preceding and following 2 days.
+#'   - "method2"; missing climate data will be replaced with the mean climate
+#'   of all records on the same date.
+#'   
+#'   Note: Other methods are possible. Users should consider those methods most
+#'   appropriate for their data.
+#'
 #'@param cinterval The resolution at which climate window analysis will be 
 #'  conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units
 #'  of parameter 'range' will differ depending on the choice
@@ -94,7 +102,8 @@
 #'@importFrom plyr rbind.fill
 #'@importFrom lubridate weeks
 #'@importFrom MuMIn AICc
-#'@importFrom Matrix Matrix  
+#'@importFrom Matrix Matrix
+#'@importFrom RcppRoll roll_mean  
 #'@examples
 #'\dontrun{
 #'##EXAMPLE 1## 
@@ -181,6 +190,20 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
                        furthest = NULL, closest = NULL,
                        thresh = NULL, cvk = NULL){
   
+  fast = FALSE
+  
+  if(cmissing != FALSE & cmissing != "method1" & cmissing != "method2"){
+    
+    stop("cmissing must be FALSE, 'method1' or 'method2'.")
+    
+  }
+  
+  if(type != "absolute" & type != "relative"){
+    
+    stop("type must be either absolute or relative.")
+    
+  }
+  
   if(is.null(cohort) == TRUE){
     cohort = lubridate::year(as.Date(bdate, format = "%d/%m/%Y")) 
   }
@@ -256,40 +279,45 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
                     upper = ifelse(binarylevel == "two" || binarylevel == "upper", allcombos$upper[combo], NA),
                     lower = ifelse(binarylevel == "two" || binarylevel == "lower", allcombos$lower[combo], NA),
                     binary = paste(allcombos$binary[combo]), centre = centre, cohort = cohort,
-                    spatial = spatial)
+                    spatial = spatial, fast = fast)
+    
     combined[[combo]]            <- runs
     allcombos$DeltaAICc[combo]   <- round(runs$Dataset$deltaAICc[1], digits = 2)
     allcombos$WindowOpen[combo]  <- runs$Dataset$WindowOpen[1]
     allcombos$WindowClose[combo] <- runs$Dataset$WindowClose[1]
-    if(length(which("lin" == levels(allcombos$func))) >0){
-      allcombos$betaL[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)
-    }
-    if(allcombos$func[1] == "centre"){
-      if(centre[[2]] == "both"){
-        allcombos$WithinGrpMean <- round(runs$Dataset$WithinGrpMean[1], digits = 2)
-        allcombos$WithinGrpDev  <- round(runs$Dataset$WithinGrpDev[1], digits = 2)
+    
+    if(all(!colnames(model.frame(baseline)) %in% "climate")){
+      
+      if(length(which("lin" == levels(allcombos$func))) >0){
+        allcombos$betaL[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)
       }
-      if(centre[[2]] == "dev"){
-        allcombos$WithinGrpDev  <- round(runs$Dataset$WithinGrpDev[1], digits = 2)
+      if(allcombos$func[1] == "centre"){
+        if(centre[[2]] == "both"){
+          allcombos$WithinGrpMean <- round(runs$Dataset$WithinGrpMean[1], digits = 2)
+          allcombos$WithinGrpDev  <- round(runs$Dataset$WithinGrpDev[1], digits = 2)
+        }
+        if(centre[[2]] == "dev"){
+          allcombos$WithinGrpDev  <- round(runs$Dataset$WithinGrpDev[1], digits = 2)
+        }
+        if(centre[[2]] == "mean"){
+          allcombos$WithinGrpMean <- round(runs$Dataset$WithinGrpMean[1], digits = 2)
+        }
       }
-      if(centre[[2]] == "mean"){
-        allcombos$WithinGrpMean <- round(runs$Dataset$WithinGrpMean[1], digits = 2)
+      if(length(which("quad" == levels(allcombos$func))) > 0){
+        allcombos$betaL[combo]   <- round(runs$Dataset$ModelBeta[1], digits = 2)
+        allcombos$betaQ[combo]   <- round(runs$Dataset$ModelBetaQ[1], digits = 2)
       }
-    }
-    if(length(which("quad" == levels(allcombos$func))) > 0){
-      allcombos$betaL[combo]   <- round(runs$Dataset$ModelBeta[1], digits = 2)
-      allcombos$betaQ[combo]   <- round(runs$Dataset$ModelBetaQ[1], digits = 2)
-    }
-    if(length(which("cub" == levels(allcombos$func))) > 0){
-      allcombos$betaL[combo]   <- round(runs$Dataset$ModelBeta[1], digits = 2)
-      allcombos$betaQ[combo]   <- round(runs$Dataset$ModelBetaQ[1], digits = 2)
-      allcombos$betaC[combo]   <- round(runs$Dataset$ModelBetaC[1], digits = 2)
-    }
-    if(length(which("inv" == levels(allcombos$func))) > 0){
-      allcombos$betaInv[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)
-    }
-    if(length(which("log" == levels(allcombos$func))) > 0){
-      allcombos$betaLog[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)
+      if(length(which("cub" == levels(allcombos$func))) > 0){
+        allcombos$betaL[combo]   <- round(runs$Dataset$ModelBeta[1], digits = 2)
+        allcombos$betaQ[combo]   <- round(runs$Dataset$ModelBetaQ[1], digits = 2)
+        allcombos$betaC[combo]   <- round(runs$Dataset$ModelBetaC[1], digits = 2)
+      }
+      if(length(which("inv" == levels(allcombos$func))) > 0){
+        allcombos$betaInv[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)
+      }
+      if(length(which("log" == levels(allcombos$func))) > 0){
+        allcombos$betaLog[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)
+      } 
     }
   }
   allcombos <- cbind(response = colnames(model.frame(baseline))[1], allcombos)

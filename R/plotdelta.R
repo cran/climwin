@@ -8,6 +8,7 @@
 #'@param plotallenv Used in conjunction with function \code{\link{plotall}}.
 #' Should not be changed manually.
 #'@param arrow TRUE or FALSE. Add arrows to plots to pinpoint best window.
+#'@param ThreeD TRUE or FALSE. Generate a 3-dimensional plot of the deltaAICc landscape.
 #'@return Returns a colour plot of model deltaAICc values (larger negative
 #' values indicate stronger models). DeltaAICc is the difference between AICc
 #' of each climate window and a null model.
@@ -19,9 +20,36 @@
 #' 
 #'plotdelta(dataset = MassOutput)
 #'@import ggplot2
+#'@importFrom grDevices colorRampPalette
 #'@export
 
-plotdelta <- function(dataset, arrow = FALSE, plotall = FALSE, plotallenv){
+plotdelta <- function(dataset, arrow = FALSE, plotall = FALSE, plotallenv, ThreeD = FALSE){
+  
+  if(ThreeD == TRUE){
+    
+    stop("3D plotting temporarily disabled due to issues with the rgl package.")
+    
+    #Matrix_3d <- matrix(nrow = max(dataset$WindowOpen), ncol = max(dataset$WindowOpen), data = 0)
+    #for(i in 1:nrow(dataset)){
+    
+    #  Matrix_3d[dataset$WindowOpen[i], dataset$WindowClose[i]] <- dataset$deltaAICc[i]
+    
+    #}
+    
+    #norm_palette <- colorRampPalette(c("blue", "yellow", "red"))
+    
+    #z <- -(Matrix_3d);
+    #x <- (1:nrow(z));
+    #y <- (1:nrow(z));
+    #zlim <- range(z);
+    #zlen <- zlim[2] - zlim[1]+1;
+    #colourlut <- norm_palette(zlen);
+    #col <- colourlut[z-zlim[1]+1];
+    #open3d();
+    #rgl.surface(x, y, z, color = col, alpha = 1, back = "lines");
+    #rgl.surface(x, y, matrix(1, nrow(z), ncol(z)), color = "grey", alpha = 0.5, back = "fill")
+    
+  } else {
   
 with(dataset, {
   if(arrow == FALSE){
@@ -32,7 +60,7 @@ with(dataset, {
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             axis.line = element_line(size=0.25, colour = "black"),
-            plot.title = element_text(size = 16),
+            plot.title = element_text(size = 16, hjust = 0.5),
             legend.position = c(0.75, 0.3),
             panel.border = element_rect(colour = "black", fill = NA))+
       ggtitle(expression(paste(Delta, "AICc (compared to null model)")))+
@@ -56,7 +84,7 @@ with(dataset, {
       theme(panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
             axis.line = element_line(size=0.25, colour = "black"),
-            plot.title = element_text(size = 16),
+            plot.title = element_text(size = 16, hjust = 0.5),
             legend.position = c(0.75, 0.3),
             panel.border = element_rect(colour = "black", fill = NA))+
       ggtitle(expression(paste(Delta, "AICc (compared to null model)")))+
@@ -77,4 +105,5 @@ with(dataset, {
 
     }
   )
+}
 }

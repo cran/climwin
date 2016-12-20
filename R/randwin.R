@@ -32,10 +32,14 @@
 #'  (e.g. number of days before a set point in time).
 #'@param refday If type is absolute, the day and month respectively of the 
 #'  year from which the absolute window analysis will start.
-#'@param cmissing TRUE or FALSE, determines what should be done if there are 
-#'  missing climate data. If FALSE, the function will not run if missing 
-#'  climate data is encountered. If TRUE, any records affected by missing 
-#'  climate data will be removed from climate window analysis.
+#'@param cmissing cmissing Determines what should be done if there are 
+#'  missing climate data. Three approaches are possible: 
+#'   - FALSE; the function will not run if missing climate data is encountered.
+#'   An object 'missing' will be returned containing the dates of missing climate.
+#'   - "method1"; missing climate data will be replaced with the mean climate
+#'   of the preceding and following 2 days.
+#'   - "method2"; missing climate data will be replaced with the mean climate
+#'   of all records on the same date.
 #'@param cinterval The resolution at which climate window analysis will be 
 #'  conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units
 #'  of parameter 'range' will differ depending on the choice
@@ -68,7 +72,7 @@
 #'  1. The variable used for mean centring (e.g. Year, Site, Individual). 
 #'  Please specify the parent environment and variable name (e.g. Biol$Year).
 #'  2. Whether the model should include both within-group means and variance ("both"),
-#'  only within-group means ("mean"), or only within-group variance ("var").
+#'  only within-group means ("mean"), or only within-group variance ("dev").
 #'@param weightfunc If window = "weighted"; 
 #'  the distribution to be used for optimisation. Can be 
 #'  either a Weibull ("W") or Generalised Extreme Value distribution ("G").
@@ -153,6 +157,8 @@ randwin <- function(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, 
                     weightfunc = "W", par = c(3, 0.2, 0), control = list(ndeps = c(0.01, 0.01, 0.01)), 
                     method = "L-BFGS-B", cutoff.day = NULL, cutoff.month = NULL,
                     furthest = NULL, closest = NULL, thresh = NULL, cvk = NULL){
+  
+  fast = FALSE
   
   #Create a centre function that over-rides quadratics etc. when centre != NULL
   if(is.null(centre[[1]]) == FALSE){
@@ -248,7 +254,7 @@ randwin <- function(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, 
                              upper = ifelse(binarylevel == "two" || binarylevel == "upper", allcombos$upper[combo], NA),
                              lower = ifelse(binarylevel == "two" || binarylevel == "lower", allcombos$lower[combo], NA),
                              binary = paste(allcombos$binary[combo]), centre = centre, k = k, spatial = spatial,
-                             cohort = cohort)
+                             cohort = cohort, fast = fast)
         
         outputrep$Repeat <- r
         WeightDist <- sum(as.numeric(cumsum(outputrep$ModWeight) <= 0.95))/nrow(outputrep)

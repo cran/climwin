@@ -46,10 +46,14 @@ Not required when a variable is provided for parameter 'centre'.}
 \item{refday}{If type is "absolute", the day and month respectively of the 
 year from which the absolute window analysis will start.}
 
-\item{cmissing}{TRUE or FALSE, determines what should be done if there are 
-missing climate data. If FALSE, the function will not run if missing climate
-data is encountered. If TRUE, any records affected by missing climate data 
-will be removed from climate window analysis.}
+\item{cmissing}{cmissing Determines what should be done if there are 
+missing climate data. Three approaches are possible:
+ - FALSE; the function will not run if missing climate data is encountered.
+ An object 'missing' will be returned containing the dates of missing climate.
+ - "method1"; missing climate data will be replaced with the mean climate
+ of the preceding and following 2 days.
+ - "method2"; missing climate data will be replaced with the mean climate
+ of all records on the same date.}
 
 \item{cinterval}{The resolution at which climate window analysis will be 
 conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units 
@@ -73,7 +77,7 @@ growing degree days (binary = FALSE).}
 1. The variable used for mean centring (e.g. Year, Site, Individual). 
 Please specify the parent environment and variable name (e.g. Biol$Year).
 2. Whether the model should include both within-group means and variance ("both"),
-only within-group means ("mean"), or only within-group variance ("var").}
+only within-group means ("mean"), or only within-group variance ("dev").}
 
 \item{cohort}{A variable used to group biological records that occur in the same biological
 season but cover multiple years (e.g. southern hemisphere breeding season). By default,
