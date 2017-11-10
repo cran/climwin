@@ -25,7 +25,7 @@ given parameter values. This can be used to select the initial parameter
 values for \code{\link{weightwin}}
 }
 \description{
-Create a plot of the Weibell or Generalised Extreme Values (GEV) distribution
+Create a plot of the Weibull or Generalised Extreme Values (GEV) distribution
 for given values of shape, scale and location parameters. Used to determine 
 initial parameter values for \code{\link{weightwin}}.
 }
@@ -42,4 +42,3 @@ explore(shape = 3, scale = 5, loc = -5, weightfunc = "G")
 \author{
 Martijn van de Pol and Liam D. Bailey
 }
-

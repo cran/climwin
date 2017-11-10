@@ -1,11 +1,12 @@
-#' Body mass data since 1979.
+#' Chick body mass data since 1979.
 #' 
 #' Artificially generated data representing
-#' average body mass since 1979.
+#' average body mass of bird chicks since 1979.
 #' @format A data frame with 47 rows and 2 variables
 #' \describe{
 #'   \item{Date}{Date of mass measurements (dd/mm/yyyy).}
 #'   \item{Mass}{Annual average body mass in grams.}
+#'   \item{Age}{Annual average age of mother in years.}
 #'   }
 #'@name Mass
 NULL
@@ -167,4 +168,16 @@ NULL
 #'   \item{Temp}{Maximum daily temperature in degrees centigrade.}
 #'   }
 #'@name ChaffClim
+NULL
+
+#' Monthly temperature data
+#' 
+#' Artificially generated temperature data
+#' at a monthly scale. Used for code testing.
+#' @format A data frame with 576 rows and 2 variables
+#' \describe{
+#'   \item{Date}{Date of temperature measurements (dd/mm/yyyy).}
+#'   \item{Temp}{Mean monthly temperature}
+#'   }
+#'@name Monthly_data
 NULL

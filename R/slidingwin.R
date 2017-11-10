@@ -2,12 +2,12 @@
 #'
 #'Finds the time period when a biological variable is most strongly affected 
 #'by climate. Note that climate data and biological data should be loaded as 
-#'two seperate objects. Both objects should contain a date column to designate
+#'two separate objects. Both objects should contain a date column to designate
 #'when the data were recorded (dd/mm/yyyy).
 #'
 #'Note that slidingwin allows you to test multiple possible parameters with the
 #'same code (e.g. func, stat, xvar). See examples for more detail.
-#'@param exclude Two values (distance and duration) which allow users
+#'@param exclude Two values (duration and distance) which allow users
 #'  to exclude short-duration long-lag climate windows from analysis (e.g., 
 #'  windows with a duration of 10 days which occur over a month ago).
 #'  These windows are often considered to be biologically implausible.
@@ -38,12 +38,13 @@
 #'   - FALSE; the function will not run if missing climate data is encountered.
 #'   An object 'missing' will be returned containing the dates of missing climate.
 #'   - "method1"; missing climate data will be replaced with the mean climate
-#'   of the preceding and following 2 days.
+#'   of the preceding and following 2 records.
 #'   - "method2"; missing climate data will be replaced with the mean climate
 #'   of all records on the same date.
 #'   
 #'   Note: Other methods are possible. Users should consider those methods most
-#'   appropriate for their data.
+#'   appropriate for their data and apply them manually before using climwin if
+#'   required.
 #'
 #'@param cinterval The resolution at which climate window analysis will be 
 #'  conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units
@@ -103,7 +104,11 @@
 #'@importFrom lubridate weeks
 #'@importFrom MuMIn AICc
 #'@importFrom Matrix Matrix
-#'@importFrom RcppRoll roll_mean  
+#'@importFrom RcppRoll roll_mean
+#'@importFrom nlme lme
+#'@importFrom nlme varIdent
+#'@importFrom nlme varExp  
+#'@importFrom nlme lme.formula
 #'@examples
 #'\dontrun{
 #'##EXAMPLE 1## 
@@ -192,20 +197,20 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
   
   fast = FALSE
   
-  if(cmissing != FALSE & cmissing != "method1" & cmissing != "method2"){
+  if(cmissing != FALSE && cmissing != "method1" && cmissing != "method2"){
     
     stop("cmissing must be FALSE, 'method1' or 'method2'.")
     
   }
   
-  if(type != "absolute" & type != "relative"){
+  if(type != "absolute" && type != "relative"){
     
     stop("type must be either absolute or relative.")
     
   }
   
   if(is.null(cohort) == TRUE){
-    cohort = lubridate::year(as.Date(bdate, format = "%d/%m/%Y")) 
+    cohort = lubridate::year(as.Date(bdate, format = "%d/%m/%Y"))
   }
   
   if(k > 0 && class(baseline)[length(class(baseline))]=="coxph"){
@@ -224,11 +229,11 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
     stop("Parameter 'type' now uses levels 'relative' and 'absolute' rather than 'variable' and 'fixed'.")
   }
   
-  if(is.null(cutoff.day) == FALSE & is.null(cutoff.month) == FALSE){
+  if(is.null(cutoff.day) == FALSE && is.null(cutoff.month) == FALSE){
     stop("cutoff.day and cutoff.month are now redundant. Please use parameter 'refday' instead.")
   }
   
-  if(is.null(furthest) == FALSE & is.null(closest) == FALSE){
+  if(is.null(furthest) == FALSE && is.null(closest) == FALSE){
     stop("furthest and closest are now redundant. Please use parameter 'range' instead.")
   }
   
@@ -273,13 +278,15 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
   
   combined <- list()
   for (combo in 1:nrow(allcombos)){
-    runs <- basewin(exclude = exclude, xvar = xvar[[paste(allcombos[combo, 1])]], cdate = cdate, bdate = bdate, baseline = baseline,
+    runs <- suppressMessages(basewin(exclude = exclude, xvar = xvar[[paste(allcombos[combo, 1])]], cdate = cdate, bdate = bdate, baseline = baseline,
                     range = range, type = paste(allcombos[combo, 2]), refday = refday, stat = paste(allcombos[combo, 3]), func = paste(allcombos[combo, 4]),
                     cmissing = cmissing, cinterval = cinterval, k = k, 
                     upper = ifelse(binarylevel == "two" || binarylevel == "upper", allcombos$upper[combo], NA),
                     lower = ifelse(binarylevel == "two" || binarylevel == "lower", allcombos$lower[combo], NA),
                     binary = paste(allcombos$binary[combo]), centre = centre, cohort = cohort,
-                    spatial = spatial, fast = fast)
+                    spatial = spatial, fast = fast))
+    
+    #return(runs)
     
     combined[[combo]]            <- runs
     allcombos$DeltaAICc[combo]   <- round(runs$Dataset$deltaAICc[1], digits = 2)

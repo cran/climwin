@@ -39,6 +39,40 @@ library(climwin)
 #      head(MassWin[[1]]$BestModelData)
 #  
 
+## ---- eval = FALSE-------------------------------------------------------
+#  
+#  MassRand <- randwin(repeats = 5,
+#                      xvar = list(Temp = MassClimate$Temp),
+#                      cdate = MassClimate$Date,
+#                      bdate = Mass$Date,
+#                      baseline = lm(Mass ~ 1, data = Mass),
+#                      cinterval = "day",
+#                      range = c(150, 0),
+#                      type = "absolute", refday = c(20, 05),
+#                      stat = "mean",
+#                      func = "lin")
+#  
+
+## ---- eval = F-----------------------------------------------------------
+#  
+#  MassRand[[1]]
+#  
+
+## ---- eval = F-----------------------------------------------------------
+#  
+#  pvalue(dataset = MassWin[[1]]$Dataset, datasetrand = MassRand[[1]], metric = "C", sample.size = 47)
+#  
+
+## ---- eval = F-----------------------------------------------------------
+#  
+#  1.94e-05
+#  
+
+## ---- fig.width = 4, fig.height = 4, message = FALSE---------------------
+
+plothist(dataset = MassOutput, datasetrand = MassRand)
+
+
 ## ---- fig.width = 4, fig.height = 4--------------------------------------
 
 plotdelta(dataset = MassOutput)
@@ -52,24 +86,6 @@ plotweights(dataset = MassOutput)
 ## ---- fig.width = 4, fig.height = 4--------------------------------------
 
 plotbetas(dataset = MassOutput)
-
-
-## ---- eval = FALSE-------------------------------------------------------
-#  
-#  MassRand <- randwin(repeats = 5,
-#                      xvar = list(Temp = MassClimate$Temp),
-#                      cdate = MassClimate$Date,
-#                      bdate = Mass$Date,
-#                      baseline = lm(Mass ~ 1, data = Mass),
-#                      cinterval = "day",
-#                      range = c(150, 0),
-#                      type = "absolute", refday = c(20, 5),
-#                      stat = "mean",
-#                      func = "lin")
-
-## ---- fig.width = 4, fig.height = 4, message = FALSE---------------------
-
-plothist(dataset = MassOutput, datasetrand = MassRand)
 
 
 ## ---- fig.width = 4, fig.height = 4--------------------------------------
@@ -88,6 +104,7 @@ MassSingle <- singlewin(xvar = list(Temp = MassClimate$Temp),
                         type = "absolute", refday = c(20, 5),
                         stat = "mean",
                         func = "lin")
+
 
 ## ---- fig.width = 6, fig.height = 6--------------------------------------
 

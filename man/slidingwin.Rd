@@ -12,7 +12,7 @@ slidingwin(exclude = NA, xvar, cdate, bdate, baseline, type, refday,
   closest = NULL, thresh = NULL, cvk = NULL)
 }
 \arguments{
-\item{exclude}{Two values (distance and duration) which allow users
+\item{exclude}{Two values (duration and distance) which allow users
 to exclude short-duration long-lag climate windows from analysis (e.g., 
 windows with a duration of 10 days which occur over a month ago).
 These windows are often considered to be biologically implausible.}
@@ -53,12 +53,13 @@ missing climate data. Three approaches are possible:
  - FALSE; the function will not run if missing climate data is encountered.
  An object 'missing' will be returned containing the dates of missing climate.
  - "method1"; missing climate data will be replaced with the mean climate
- of the preceding and following 2 days.
+ of the preceding and following 2 records.
  - "method2"; missing climate data will be replaced with the mean climate
  of all records on the same date.
  
  Note: Other methods are possible. Users should consider those methods most
- appropriate for their data.}
+ appropriate for their data and apply them manually before using climwin if
+ required.}
 
 \item{cinterval}{The resolution at which climate window analysis will be 
 conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units
@@ -126,7 +127,7 @@ Will return a list with an output for each tested set of climate
 \description{
 Finds the time period when a biological variable is most strongly affected 
 by climate. Note that climate data and biological data should be loaded as 
-two seperate objects. Both objects should contain a date column to designate
+two separate objects. Both objects should contain a date column to designate
 when the data were recorded (dd/mm/yyyy).
 }
 \details{
@@ -212,4 +213,3 @@ summary(MassWin[[2]]$BestModel)
 \author{
 Liam D. Bailey and Martijn van de Pol
 }
-

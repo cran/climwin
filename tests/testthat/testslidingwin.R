@@ -20,10 +20,10 @@ test_that("slidingwin produces the right output", {
   data(MassClimate, envir = environment())
   
   furthest = 2
-  closest = 2
+  closest = 0
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "max", func = "lin", cmissing = FALSE)
   
   duration  <- (furthest - closest) + 1
@@ -52,6 +52,11 @@ test_that("slidingwin produces the right output", {
   
   # Test that data was not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -2.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.7)
   
 })
 
@@ -97,6 +102,11 @@ test_that("slidingwin produces binary values with upper and binary = TRUE", {
   # Test that the maximum value of climate was set at 1
   expect_equal(max(test[[1]]$BestModelData$climate), 1)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 1.9)
+  
 })
 
 # Test with upper and without binary
@@ -119,6 +129,11 @@ test_that("slidingwin produces non-binary values with upper and binary = FALSE",
   # Test that the maximum value of climate in greater than 1
   expect_true(max(test[[1]]$BestModelData$climate) > 1)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.1)
+  
 })
 
 # Test with lower and without binary
@@ -133,13 +148,18 @@ test_that("slidingwin produces non-binary values with lower and binary = FALSE",
   test <- slidingwin(xvar = list(Temp = MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
                      baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0), 
                      type = "relative", stat = "max", func = "lin", cmissing = FALSE,
-                     lower = 10, upper = 15, binary = FALSE)
+                     lower = 10, binary = FALSE)
   
   # Test that the minumum value of climate is set at 0
   expect_equal(min(test[[1]]$BestModelData$climate), 0)
   
   # Test that the maximum value of climate is greater than 1
   expect_true(max(test[[1]]$BestModelData$climate) > 1)
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.5)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.1)
   
 })
 
@@ -163,6 +183,11 @@ test_that("slidingwin produces binary values with lower and binary = TRUE", {
   # Test that the maximum value of climate is set at 1
   expect_equal(max(test[[1]]$BestModelData$climate), 1)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 1.1)
+  
 })
 
 # Test with upper, lower and binary
@@ -184,6 +209,11 @@ test_that("slidingwin produces binary values with lower/upper and binary = TRUE"
   
   # Test that the maximum value of climate is set at 1
   expect_equal(max(test[[1]]$BestModelData$climate), 1)
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 0.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 2.2)
   
 })
 
@@ -207,11 +237,143 @@ test_that("slidingwin produces non-binary values with lower/upper and binary = F
   # Test that the maximum value of climate is greater than 1
   expect_true(max(test[[1]]$BestModelData$climate) > 1)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.6)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.4)
+  
 })
 
 ##########################################################
 
 # Test different settings of cmissing #
+
+# Test when cmissing is FALSE and NAs are present (daily)#
+test_that("Errors return when cmissing FALSE and NA present at a daily scale", {
+  
+  data(Mass, envir = environment())
+  data(MassClimate, envir = environment())
+  
+  MassClimate2 <- MassClimate[-491, ]
+  expect_error(slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                     type = "relative", stat = "max", func = "lin", cmissing = FALSE))
+  
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
+})
+
+# Test when cmissing is FALSE and NAs are present (weekly)#
+test_that("Errors return when cmissing FALSE and NA present at a weekly scale", {
+  
+  data(Mass, envir = environment())
+  data(MassClimate, envir = environment())
+  
+  MassClimate2 <- MassClimate[-c(491:505), ]
+  expect_error(slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+                          baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                          type = "relative", stat = "max", func = "lin", cmissing = FALSE,
+                          cinterval = "week"))
+  
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
+})
+
+# Test when cmissing is FALSE and NAs are present (monthly)#
+test_that("Errors return when cmissing FALSE and NA present at a monthly scale", {
+  
+  data(Mass, envir = environment())
+  data(MassClimate, envir = environment())
+  
+  MassClimate2 <- MassClimate[-c(480:520), ]
+  expect_error(slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+                          baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                          type = "relative", stat = "max", func = "lin", cmissing = FALSE,
+                          cinterval = "month"))
+  
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
+})
+
+# Test cmissing = FALSE with spatial replication (daily)
+test_that("cmissing = FALSE with NAs and spatial replication (daily)", {
+  
+  data(Mass, envir = environment())
+  Mass$Plot <- c(rep(c("A", "B"), 23), "A")
+  data(MassClimate, envir = environment())
+  MassClimate$Plot <- "A"
+  MassClimate2 <- MassClimate
+  MassClimate2$Plot <- "B"
+  Clim  <- rbind(MassClimate, MassClimate2)
+  Clim2 <- Clim[-which(Clim$Plot == "B" & Clim$Date == "8/05/1966"), ]
+  
+  expect_error(slidingwin(xvar = list(Clim2$Temp), cdate = Clim2$Date, bdate = Mass$Date, 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                     type = "relative", 
+                     stat = "max", func = "lin", cmissing = FALSE,
+                     spatial = list(Mass$Plot, Clim2$Plot)))
+  
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
+})
+
+# Test cmissing = FALSE with spatial replication (weekly)
+test_that("cmissing = FALSE with NAs and spatial replication (weekly)", {
+  
+  data(Mass, envir = environment())
+  Mass$Plot <- c(rep(c("A", "B"), 23), "A")
+  data(MassClimate, envir = environment())
+  MassClimate$Plot <- "A"
+  MassClimate2 <- MassClimate
+  MassClimate2$Plot <- "B"
+  Clim  <- rbind(MassClimate, MassClimate2)
+  Clim2 <- Clim[-c(18025:18015), ]
+  
+  expect_error(slidingwin(xvar = list(Clim2$Temp), cdate = Clim2$Date, bdate = Mass$Date, 
+                          baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                          type = "relative", 
+                          stat = "max", func = "lin", cmissing = FALSE,
+                          spatial = list(Mass$Plot, Clim2$Plot),
+                          cinterval = "week"))
+  
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
+})
+
+# Test cmissing = FALSE with spatial replication (monthly)
+test_that("cmissing = FALSE with NAs and spatial replication (monthly)", {
+  
+  data(Mass, envir = environment())
+  Mass$Plot <- c(rep(c("A", "B"), 23), "A")
+  data(MassClimate, envir = environment())
+  MassClimate$Plot <- "A"
+  MassClimate2 <- MassClimate
+  MassClimate2$Plot <- "B"
+  Clim  <- rbind(MassClimate, MassClimate2)
+  Clim2 <- Clim[-c(18000:18050), ]
+  
+  expect_error(slidingwin(xvar = list(Clim2$Temp), cdate = Clim2$Date, bdate = Mass$Date, 
+                          baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                          type = "relative", 
+                          stat = "max", func = "lin", cmissing = FALSE,
+                          spatial = list(Mass$Plot, Clim2$Plot),
+                          cinterval = "month"))
+  
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
+})
 
 # Test when cmissing is method1 and no NA is present #
 test_that("No errors return when cmissing method1 and full dataset", {
@@ -223,8 +385,13 @@ test_that("No errors return when cmissing method1 and full dataset", {
                      baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
                      type = "relative", stat = "max", func = "lin", cmissing = "method1")
   
-  # Test that slidingwin ran without an error
+  #Test that slidingwin ran without an error
   expect_true(is.list(test))
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -2.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.7)
 
 })
 
@@ -241,10 +408,15 @@ test_that("No errors return when cmissing method2 and full dataset", {
   # Test that slidingwin ran without an error
   expect_true(is.list(test))
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -2.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.7)
+  
 })
 
-# Test when cmissing is method1 and NA is present #
-test_that("No errors return when cmissing method1 with NAs", {
+# Test when cmissing is method1 and NA is present (daily) #
+test_that("No errors return when cmissing method1 with NAs (daily)", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -257,10 +429,15 @@ test_that("No errors return when cmissing method1 with NAs", {
   # Test that slidingwin ran without an error
   expect_true(is.list(test))
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -2.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.7)
+  
 })
 
-# Test when cmissing is method2 and NA is present #
-test_that("No errors return when cmissing method1 with NAs", {
+# Test when cmissing is method2 and NA is present (daily)#
+test_that("No errors return when cmissing method2 with NAs (daily)", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -273,33 +450,15 @@ test_that("No errors return when cmissing method1 with NAs", {
   # Test that slidingwin ran without an error
   expect_true(is.list(test))
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -2.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.7)
+  
 })
 
-# Test when cmissing is FALSE and NA is present (cinterval = "day") #
-test_that("Error returned when cmissing FALSE with NAs, cinterval = day", {
-  
-  data(Mass, envir = environment())
-  data(MassClimate, envir = environment())
-  
-  MassClimate2 <- MassClimate[-491, ]
-  
-  # Test that an error was returned
-  expect_error(slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
-                          baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
-                          type = "relative", stat = "max", func = "lin", 
-                          cmissing=FALSE))
-  
-  # Test that an object missing was returned
-  expect_true(exists("missing"))
-  
-  # Test that the length of missing was as expected
-  expect_equal(length(missing), 1)
-  rm("missing", envir = .GlobalEnv)
-  
-  })
-
-# Test when cmissing is FALSE and NA is present (cinterval = "week") #
-test_that("Error returned when cmissing FALSE with NAs, cinterval = week", {
+# Test when cmissing is method1 and NA is present (cinterval = "week") #
+test_that("No errors returned when cmissing method1 with NAs, cinterval = week", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -307,22 +466,74 @@ test_that("Error returned when cmissing FALSE with NAs, cinterval = week", {
   MassClimate2 <- MassClimate[-c(491:505), ]
   
   # Test that an error is returned
-  expect_error(slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+  test <- slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
                           baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                           type = "relative", stat = "max", func = "lin", cinterval = "week",
-                          cmissing = FALSE))
+                          cmissing = "method1")
   
-  # Test that an object missing was created
-  expect_true(exists("missing"))
+  # Test that slidingwin ran without an error
+  expect_true(is.list(test))
   
-  # Test that the length of missing is as expected
-  expect_equal(length(missing), 1)
-  rm("missing", envir = .GlobalEnv)
+  #Test the values we get stay the same as github version (7-9-17). 
+  #N.B. We don't use the old R version because we have changed how we calculate weeks (i.e. use lubridate::week rather than dividing by 7)
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 0.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.6)
   
 })
 
-# Test when cmissing is FALSE and NA is present (cinterval = "month") #
-test_that("Error returned when cmissing FALSE with NAs, cinterval = month", {
+# Test when cmissing is method2 and NA is present (cinterval = "week") #
+test_that("Error returned when cmissing method2 with NAs, cinterval = week", {
+  
+  data(Mass, envir = environment())
+  data(MassClimate, envir = environment())
+  
+  MassClimate2 <- MassClimate[-c(491:505), ]
+  
+  # Test that an error is returned
+  test <- slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                     type = "relative", stat = "max", func = "lin", cinterval = "week",
+                     cmissing = "method2")
+  
+  # Test that slidingwin ran without an error
+  expect_true(is.list(test))
+  
+  #Test the values we get stay the same as github version (7-9-17). 
+  #N.B. We don't use the old R version because we have changed how we calculate weeks (i.e. use lubridate::week rather than dividing by 7)
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 0.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.6)
+  
+})
+
+# Test when cmissing is method1 and NA is present (cinterval = "month") #
+test_that("Error returned when cmissing method1 with NAs, cinterval = month", {
+  
+  data(Mass, envir = environment())
+  data(MassClimate, envir = environment())
+  
+  MassClimate2 <- MassClimate[-c(1900:2000), ]
+  
+  # Test that an error is returned #
+  test <- slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+                          baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0), 
+                          type = "relative", stat = "max", func = "lin", cinterval = "month",
+                          cmissing = "method1")
+  
+  # Test that slidingwin ran without an error
+  expect_true(is.list(test))
+  
+  #Test the values we get stay the same as github version (7-9-17). 
+  #N.B. We don't use the old R version because we have changed how we calculate months slightly
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -3.9)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -1.8)
+  
+})
+
+# Test when cmissing is method2 and NA is present (cinterval = "month") #
+test_that("Error returned when cmissing method2 with NAs, cinterval = month", {
   
   data(Mass, envir = environment())
   data(MassClimate, envir = environment())
@@ -330,17 +541,19 @@ test_that("Error returned when cmissing FALSE with NAs, cinterval = month", {
   MassClimate2 <- MassClimate[-c(1000:2000), ]
   
   # Test that an error is returned #
-  expect_error(slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
-                          baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0), 
-                          type = "relative", stat = "max", func = "lin", cinterval = "month",
-                          cmissing = FALSE))
+  test <- slidingwin(xvar = list(MassClimate2$Temp), cdate = MassClimate2$Date, bdate = Mass$Date, 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0), 
+                     type = "relative", stat = "max", func = "lin", cinterval = "month",
+                     cmissing = "method2")
   
-  # Test that an object missing has been produced #
-  expect_true(exists("missing"))
+  # Test that slidingwin ran without an error
+  expect_true(is.list(test))
   
-  # Test that the length of missing is as expected #
-  expect_equal(length(missing), 1)
-  rm("missing", envir = .GlobalEnv)
+  #Test the values we get stay the same as github version (7-9-17). 
+  #N.B. We don't use the old R version because we have changed how we calculate months slightly
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -1.9)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -1.6)
   
 })
 
@@ -355,8 +568,8 @@ test_that("glm models can run in slidingwin", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = glm(Mass ~ 1, data = Mass, family = poisson), range = c(2, 2), 
-                     type = "relative", stat = "max", func = "lin", cmissing=FALSE)
+                     baseline = glm(Mass ~ 1, data = Mass, family = poisson), range = c(2, 0), 
+                     type = "relative", stat = "max", func = "lin", cmissing = FALSE)
   
   # Test that slidingwin produced an output
   expect_true(is.list(test))
@@ -370,18 +583,23 @@ test_that("glm models can run in slidingwin", {
   # Test that there are atleast 2 variables in the best model data
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.3)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.0)
+  
 })
 
-# Test mixed effects models
-test_that("lmer models can run in slidingwin", {
+# Test mixed effects models (lme4) #
+test_that("lmer [lme4] models can run in slidingwin", {
   
   data(Offspring, envir = environment())
   data(OffspringClimate, envir = environment())
   
   test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
                      bdate = Offspring$Date, 
-                     baseline = lmer(Offspring ~ 1 + (1|BirdID), data = Offspring),  
-                     range = c(2, 2), type = "relative", 
+                     baseline = lmer(Offspring ~ 1 + (1|BirdID), data = Offspring, REML = F),  
+                     range = c(2, 0), type = "relative", 
                      stat = "max", func = "lin", cmissing=FALSE)
   
   # Test that slidingwin produced an output
@@ -399,10 +617,51 @@ test_that("lmer models can run in slidingwin", {
   # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -55.3)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
 })
 
-# Test glmer models #
-test_that("glmer models can run in slidingwin", {
+# Test mixed effects models (lme4) #
+test_that("lmer [lme4] models can run in slidingwin with cross-validation", {
+  
+  set.seed(666)
+  
+  data(Offspring, envir = environment())
+  data(OffspringClimate, envir = environment())
+  
+  test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
+                     bdate = Offspring$Date, 
+                     baseline = lmer(Offspring ~ 1 + (1|BirdID), data = Offspring, REML = F),  
+                     range = c(2, 1), type = "relative", 
+                     stat = "max", func = "lin", cmissing=FALSE, k = 2)
+  
+  # Test that slidingwin produced an output
+  expect_true(is.list(test))
+  
+  # Test that lmer model produced an intercept
+  expect_false(is.na(fixef(test[[1]]$BestModel)[1]))
+  
+  # Test that lmer model produced a climate beta estimate
+  expect_false(is.na(fixef(test[[1]]$BestModel)[2]))
+  
+  # Test that best model data doesn't contain NAs
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that best model data has at least 2 parameters
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -17.3)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
+})
+
+# Test glmer models (lme4) #
+test_that("glmer [lme4] models can run in slidingwin", {
   
   data(Offspring, envir = environment())
   data(OffspringClimate, envir = environment())
@@ -429,10 +688,164 @@ test_that("glmer models can run in slidingwin", {
   # Test that best model data has atleast two parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -14.0)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
 })
 
+# Test glmer models (lme4) #
+test_that("glmer [lme4] models can run in slidingwin with cross-validation", {
+  
+  set.seed(666)
+  
+  data(Offspring, envir = environment())
+  data(OffspringClimate, envir = environment())
+  
+  # Warnings created due to convergence issues with such a small data set
+  suppressWarnings(test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
+                                      bdate = Offspring$Date, 
+                                      baseline = glmer(Offspring ~ 1 + (1|Order), data = Offspring, family = "poisson"),  
+                                      range = c(1, 0), type = "relative", 
+                                      stat = "max", func = "lin", cmissing=FALSE, k = 2))
+  
+  # Test that slidingwin has produced an output
+  expect_true(is.list(test))
+  
+  # Test that glmer model produced an intercept
+  expect_false(is.na(fixef(test[[1]]$BestModel)[1]))
+  
+  # Test that glmer model produced a beta estimate for climate
+  expect_false(is.na(fixef(test[[1]]$BestModel)[2]))
+  
+  # Test there are no NA values in best model data
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that best model data has atleast two parameters
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -3.5)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
+})
 
-### TEST COXPH MODELS!!!!!!!!! ###
+# Test mixed effects models (nlme) #
+test_that("basic lme [nlme] models can run in slidingwin", {
+  
+  data(Offspring, envir = environment())
+  data(OffspringClimate, envir = environment())
+  
+  test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
+                     bdate = Offspring$Date, 
+                     baseline = lme(Offspring ~ 1, random = ~ 1 | BirdID, data = Offspring, method = "ML"),  
+                     range = c(2, 0), type = "relative", 
+                     stat = "max", func = "lin", cmissing = FALSE)
+  
+  # Test that slidingwin produced an output
+  expect_true(is.list(test))
+  
+  # Test that lmer model produced an intercept
+  expect_false(is.na(fixef(test[[1]]$BestModel)[1]))
+  
+  # Test that lmer model produced a climate beta estimate
+  expect_false(is.na(fixef(test[[1]]$BestModel)[2]))
+  
+  # Test that best model data doesn't contain NAs
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that best model data has at least 2 parameters
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as github version (7-9-17).
+  #N.B. Earlier R version didn't have nlme compatability
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -55.3)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
+})
+
+# Test mixed effects models (nlme) #
+test_that("lme [nlme] model with VarIdent can run in slidingwin", {
+  
+  data(Offspring, envir = environment())
+  data(OffspringClimate, envir = environment())
+  
+  assign("vI", varIdent(value = 10, form =~ Order), envir=globalenv())
+  
+  test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
+                     bdate = Offspring$Date, 
+                     baseline = lme(Offspring ~ Order, random = ~ 1 | BirdID, data = Offspring, weights = vI, method = "ML"),  
+                     range = c(2, 0), type = "relative", 
+                     stat = "max", func = "lin", cmissing = FALSE)
+  
+  # Test that slidingwin produced an output
+  expect_true(is.list(test))
+  
+  # Test that lmer model produced an intercept
+  expect_false(is.na(fixef(test[[1]]$BestModel)[1]))
+  
+  # Test that lmer model produced a climate beta estimate
+  expect_false(is.na(fixef(test[[1]]$BestModel)[2]))
+  
+  # Test that best model data doesn't contain NAs
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that best model data has at least 2 parameters
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as github version (7-9-17).
+  #N.B. Earlier R version didn't have nlme compatability
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -22.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
+  rm("vI", envir = .GlobalEnv)
+  
+})
+
+# Test mixed effects models (nlme) #
+test_that("lme [nlme] model with VarExp can run in slidingwin", {
+  
+  data(Offspring, envir = environment())
+  data(OffspringClimate, envir = environment())
+  
+  assign("vE", varExp(form =~ Order), envir=globalenv())
+  
+  test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
+                     bdate = Offspring$Date, 
+                     baseline = lme(Offspring ~ Order, random = ~ 1 | BirdID, data = Offspring, weights = vE, method = "ML"),  
+                     range = c(2, 0), type = "relative", 
+                     stat = "max", func = "lin", cmissing = FALSE)
+  
+  # Test that slidingwin produced an output
+  expect_true(is.list(test))
+  
+  # Test that lmer model produced an intercept
+  expect_false(is.na(fixef(test[[1]]$BestModel)[1]))
+  
+  # Test that lmer model produced a climate beta estimate
+  expect_false(is.na(fixef(test[[1]]$BestModel)[2]))
+  
+  # Test that best model data doesn't contain NAs
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that best model data has at least 2 parameters
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as github version (7-9-17).
+  #N.B. Earlier R version didn't have nlme compatability
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -23.5)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.0)
+  
+  rm("vE", envir = .GlobalEnv)
+  
+})
+
+### TEST COXPH MODELS!!!!!!!!! STILL NEEDS TO BE DONE! ###
 
 ##########################################################
 
@@ -445,7 +858,7 @@ test_that("absolute window works", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
                      stat = "max", func = "lin", cmissing=FALSE)
   
@@ -461,6 +874,11 @@ test_that("absolute window works", {
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -4.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.8)
+  
 })
 
 ##########################################################
@@ -472,7 +890,7 @@ test_that("slope stat work", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 1), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "slope", func = "lin", cmissing=FALSE)
 
   # Test that slidingwin produces an output
@@ -486,6 +904,12 @@ test_that("slope stat work", {
   
   # Test that best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as github (7-9-17)
+  #N.B. Don't use original R version because we have reversed the sign of slopes
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -4.0)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 1.4)
   
 })
 
@@ -528,11 +952,11 @@ test_that("Quadratic function works", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "max", func = "quad", cmissing=FALSE)
   
   furthest = 2
-  closest = 2
+  closest = 0
   duration  <- (furthest - closest) + 1
   maxmodno  <- (duration * (duration + 1))/2
   
@@ -552,7 +976,7 @@ test_that("Quadratic function works", {
   expect_equal(length(which(is.na(test[[1]]$Dataset[, 5]))), 0)
   
   # Test that the quad function has been used
-  expect_true(test[[1]]$Dataset[, 10] == "quad")
+  expect_true(test[[1]]$Dataset[1, 10] == "quad")
   
   # Test that the dataset is atleast 17 columns (one extra column for quad SE)
   expect_true(ncol(test[[1]]$Dataset) == 18)
@@ -563,6 +987,11 @@ test_that("Quadratic function works", {
   # Test that data is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -1.0)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -2.8)
+  
 })
 
 # Test cubic function #
@@ -572,11 +1001,11 @@ test_that("Cubic function works", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "max", func = "cub", cmissing=FALSE)
   
   furthest = 2
-  closest = 2
+  closest = 0
   duration  <- (furthest - closest) + 1
   maxmodno  <- (duration * (duration + 1))/2
   
@@ -596,7 +1025,7 @@ test_that("Cubic function works", {
   expect_equal(length(which(is.na(test[[1]]$Dataset[, 6]))), 0)
   
   # Test that the cub function has been used
-  expect_true(test[[1]]$Dataset[, 11] == "cub")
+  expect_true(test[[1]]$Dataset[1, 11] == "cub")
   
   # Test that the dataset is atleast 18 columns (extra columns for quad and cub SE)
   expect_true(ncol(test[[1]]$Dataset) == 19)
@@ -606,6 +1035,11 @@ test_that("Cubic function works", {
   
   # Test that data is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 1.3)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 1.7)
  
 })
 
@@ -616,11 +1050,11 @@ test_that("Log function works", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "max", func = "log", cmissing=FALSE)
   
   furthest = 2
-  closest = 2
+  closest = 0
   duration  <- (furthest - closest) + 1
   maxmodno  <- (duration * (duration + 1))/2
   
@@ -640,7 +1074,7 @@ test_that("Log function works", {
   expect_equal(length(which(is.na(test[[1]]$Dataset[, 4]))), 0)
   
   # Test that log function has been used
-  expect_true(test[[1]]$Dataset[, 9] == "log")
+  expect_true(test[[1]]$Dataset[1, 9] == "log")
   
   # Test that the dataset is atleast 16 columns (no extra columns)
   expect_true(ncol(test[[1]]$Dataset) == 17)
@@ -651,6 +1085,11 @@ test_that("Log function works", {
   # Test that data is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -3.1)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -8.3)
+  
 })
 
 # Test inverse function #
@@ -660,11 +1099,11 @@ test_that("Inverse function works", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "max", func = "inv", cmissing=FALSE)
   
   furthest = 2
-  closest = 2
+  closest = 0
   duration  <- (furthest - closest) + 1
   maxmodno  <- (duration * (duration + 1))/2
   
@@ -684,7 +1123,7 @@ test_that("Inverse function works", {
   expect_equal(length(which(is.na(test[[1]]$Dataset[, 4]))), 0)
   
   # Test that the inv function has been used
-  expect_true(test[[1]]$Dataset[, 9] == "inv")
+  expect_true(test[[1]]$Dataset[1, 9] == "inv")
   
   # Test that the dataset is atleast 16 columns (no extra columns)
   expect_true(ncol(test[[1]]$Dataset) == 17)
@@ -694,6 +1133,11 @@ test_that("Inverse function works", {
   
   # Test that data is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -3.1)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 88.7)
   
 })
 
@@ -708,7 +1152,7 @@ data(Mass, envir = environment())
 data(MassClimate, envir = environment())
 
 test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                   baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                   baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                    type = "relative", stat = "max", func = "lin",
                    cmissing=FALSE, cinterval = "week")
 
@@ -724,6 +1168,12 @@ expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
 # Test that best model data has at least two parameters
 expect_true(ncol(test[[1]]$BestModelData) >= 2)
 
+#Test the values we get stay the same as github version (7-9-17). 
+#N.B. We don't use the old R version because we have changed how we calculate weeks (i.e. use lubridate::week rather than dividing by 7)
+expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 0.1)
+expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.7)
+
 })
 
 # Test cinterval = month #
@@ -733,7 +1183,7 @@ data(Mass, envir = environment())
 data(MassClimate, envir = environment())
   
 test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                   baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                   baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                    type = "relative", stat = "max", func = "lin",
                    cmissing=FALSE, cinterval = "month")
 
@@ -748,6 +1198,12 @@ expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
 
 # Test that best model data has at least two parameters
 expect_true(ncol(test[[1]]$BestModelData) >= 2)
+
+#Test the values we get stay the same as github version (7-9-17). 
+#N.B. We don't use the old R version because we have changed how we calculate month
+expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -8.3)
+expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -1.8)
 
 })
 
@@ -776,7 +1232,7 @@ test_that("Does cross validation work?", {
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "relative", stat = "max", func = "lin",
                      cmissing = FALSE, cinterval = "day", k = 2)
   
@@ -793,7 +1249,7 @@ test_that("Does cross validation work?", {
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
   # Test that values of k are documented in the dataset
-  expect_equal(test[[1]]$Dataset$K, 2)
+  expect_equal(test[[1]]$Dataset$K[1], 2)
   
 })
 
@@ -809,7 +1265,7 @@ test_that("Mean centring is functioning", {
   Offspring$Year <- lubridate::year(as.Date(Offspring$Date, format = "%d/%m/%Y"))
   
   test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
-                     bdate = Offspring$Date, baseline = lm(Offspring ~ 1, data = Offspring), range = c(2, 2), 
+                     bdate = Offspring$Date, baseline = lm(Offspring ~ 1, data = Offspring), range = c(2, 0), 
                      type = "relative", stat = "max", func = "lin",
                      cmissing = FALSE, cinterval = "day", centre = list(Offspring$Year, "both"))
   
@@ -837,17 +1293,23 @@ test_that("Mean centring is functioning", {
   # Test that dataset is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -39.0)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$WithinGrpMean[1], 1) == 0.0)
+  expect_true(round(test[[1]]$Dataset$WithinGrpDev[1], 1) == 0.0)
+  
 })
 
 # Test centring with only wgmean #
-test_that("Mean centring is functioning", {
+test_that("Mean centring is functioning with only wgmeans", {
   
   data(Offspring, envir = environment())
   data(OffspringClimate, envir = environment())
   Offspring$Year <- lubridate::year(as.Date(Offspring$Date, format = "%d/%m/%Y"))
   
   test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
-                     bdate = Offspring$Date, baseline = lm(Offspring ~ 1, data = Offspring), range = c(2, 2), 
+                     bdate = Offspring$Date, baseline = lm(Offspring ~ 1, data = Offspring), range = c(2, 0), 
                      type = "relative", stat = "max", func = "lin",
                      cmissing = FALSE, cinterval = "day", centre = list(Offspring$Year, "mean"))
   
@@ -875,17 +1337,22 @@ test_that("Mean centring is functioning", {
   # Test that dataset is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -2.8)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$WithinGrpMean[1], 1) == 0.0)
+  
 })
 
-# Test centring with only wgmean #
-test_that("Mean centring is functioning", {
+# Test centring with only wgdev #
+test_that("Mean centring is functioning with only wgdev", {
   
   data(Offspring, envir = environment())
   data(OffspringClimate, envir = environment())
   Offspring$Year <- lubridate::year(as.Date(Offspring$Date, format = "%d/%m/%Y"))
   
   test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, 
-                     bdate = Offspring$Date, baseline = lm(Offspring ~ 1, data = Offspring), range = c(2, 2), 
+                     bdate = Offspring$Date, baseline = lm(Offspring ~ 1, data = Offspring), range = c(2, 0), 
                      type = "relative", stat = "max", func = "lin",
                      cmissing = FALSE, cinterval = "day", centre = list(Offspring$Year, "dev"))
   
@@ -913,21 +1380,26 @@ test_that("Mean centring is functioning", {
   # Test that dataset is not randomised
   expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -36.1)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$WithinGrpDev[1], 1) == 1.3)
+  
 })
 
 ################################################################
 
 # Test cohort parameter #
-test_that("absolute window works", {
+test_that("absolute window works with a cohort parameter", {
   
   data(Mass, envir = environment())
   Mass$Plot <- c(rep(c("A", "B"), 23), "A")
   data(MassClimate, envir = environment())
   
   test <- slidingwin(xvar = list(MassClimate$Temp), cdate = MassClimate$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
-                     stat = "max", func = "lin", cmissing=FALSE,
+                     stat = "max", func = "lin", cmissing = FALSE,
                      cohort = Mass$Plot)
   
   # Test that slidingwin has produced an output
@@ -942,11 +1414,16 @@ test_that("absolute window works", {
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 2.3)
+  #expect_true(test[[1]]$Dataset$WindowOpen[1] == 1 & test[[1]]$Dataset$WindowClose[1] == 1)
+  #expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 1.6)
+  
 })
 
 ###############################################################
 
-# Test spatial replication #
+# Test spatial replication
 test_that("spatial replication works in slidingwin", {
   
   data(Mass, envir = environment())
@@ -955,12 +1432,12 @@ test_that("spatial replication works in slidingwin", {
   MassClimate$Plot <- "A"
   MassClimate2 <- MassClimate
   MassClimate2$Plot <- "B"
-  Clim <- rbind(MassClimate, MassClimate2)
+  Clim  <- rbind(MassClimate, MassClimate2)
   
   test <- slidingwin(xvar = list(Clim$Temp), cdate = Clim$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
-                     stat = "max", func = "lin", cmissing=FALSE,
+                     stat = "max", func = "lin", cmissing = FALSE,
                      spatial = list(Mass$Plot, Clim$Plot))
   
   # Test that slidingwin has produced an output
@@ -975,6 +1452,11 @@ test_that("spatial replication works in slidingwin", {
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -4.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.8)
+  
 })
 
 test_that("spatial replication works in slidingwin with week", {
@@ -988,7 +1470,7 @@ test_that("spatial replication works in slidingwin with week", {
   Clim <- rbind(MassClimate, MassClimate2)
   
   test <- slidingwin(xvar = list(Clim$Temp), cdate = Clim$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
                      cinterval = "week",
                      stat = "max", func = "lin", cmissing=FALSE,
@@ -1006,6 +1488,12 @@ test_that("spatial replication works in slidingwin with week", {
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as github (7-9-17)
+  #Don't use old R because we changed how we estimate week slightly
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == 0.4)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 0 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.2)
+  
 })
 
 test_that("spatial replication works in slidingwin with month", {
@@ -1019,7 +1507,7 @@ test_that("spatial replication works in slidingwin with month", {
   Clim <- rbind(MassClimate, MassClimate2)
   
   test <- slidingwin(xvar = list(Clim$Temp), cdate = Clim$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
                      cinterval = "month",
                      stat = "max", func = "lin", cmissing=FALSE,
@@ -1037,6 +1525,12 @@ test_that("spatial replication works in slidingwin with month", {
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as github (7-9-17)
+  #Don't use old R because we changed how we estimate month slightly
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -32.5)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -3.2)
+  
 })
 
 test_that("spatial replication works in slidingwin with upper", {
@@ -1050,7 +1544,7 @@ test_that("spatial replication works in slidingwin with upper", {
   Clim <- rbind(MassClimate, MassClimate2)
   
   test <- slidingwin(xvar = list(Clim$Temp), cdate = Clim$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 2), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
                      cinterval = "day", upper = 15,
                      stat = "max", func = "lin", cmissing=FALSE,
@@ -1067,6 +1561,11 @@ test_that("spatial replication works in slidingwin with upper", {
   
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -0.0)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 0)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.2)
   
 })
 
@@ -1088,6 +1587,10 @@ test_that("spatial replication with slidingwin returns an error with NAs and cmi
                      stat = "max", func = "lin", cmissing = FALSE,
                      spatial = list(Mass$Plot, Clim$Plot)))
   
+  expect_true(exists("missing"))
+  
+  rm("missing", envir = .GlobalEnv)
+  
 })
 
 test_that("spatial replication works with slidingwin with NAs and cmissing method1", {
@@ -1102,7 +1605,7 @@ test_that("spatial replication works with slidingwin with NAs and cmissing metho
   Clim <- Clim[-which(Clim$Date == "20/05/1979"), ]
   
   test <- slidingwin(xvar = list(Clim$Temp), cdate = Clim$Date, bdate = Mass$Date, 
-                          baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0), 
+                          baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                           type = "absolute", refday = c(20, 5), 
                           cinterval = "day",
                           stat = "max", func = "lin", cmissing = "method1",
@@ -1120,6 +1623,11 @@ test_that("spatial replication works with slidingwin with NAs and cmissing metho
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -4.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.8)
+  
 })
 
 test_that("spatial replication works with slidingwin with NAs and cmissing method2", {
@@ -1134,7 +1642,7 @@ test_that("spatial replication works with slidingwin with NAs and cmissing metho
   Clim <- Clim[-which(Clim$Date == "20/05/1979"), ]
   
   test <- slidingwin(xvar = list(Clim$Temp), cdate = Clim$Date, bdate = Mass$Date, 
-                     baseline = lm(Mass ~ 1, data = Mass), range = c(1, 0), 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
                      type = "absolute", refday = c(20, 5), 
                      cinterval = "day",
                      stat = "max", func = "lin", cmissing = "method2",
@@ -1152,6 +1660,111 @@ test_that("spatial replication works with slidingwin with NAs and cmissing metho
   # Test that the best model data has at least 2 parameters
   expect_true(ncol(test[[1]]$BestModelData) >= 2)
   
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -4.2)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 1)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.8)
+  
 })
 
-#######################################################################
+##################################################################
+
+#Test that code works with climate in a monthly format
+
+test_that("slidingwin produces the right output with monthly climate data", {
+  
+  data(Mass, envir = environment())
+  data(Monthly_data, envir = environment())
+  
+  furthest = 2
+  closest = 0
+  
+  test <- slidingwin(xvar = list(Monthly_data$Temp), cdate = Monthly_data$Date, bdate = Mass$Date, 
+                     baseline = lm(Mass ~ 1, data = Mass), range = c(2, 0), 
+                     type = "relative", stat = "max", func = "lin", cmissing = FALSE,
+                     cinterval = "month")
+  
+  duration  <- (furthest - closest) + 1
+  maxmodno  <- (duration * (duration + 1))/2
+  
+  # Test that a list has been produced
+  expect_true(is.list(test))
+  
+  # Test that a best model was returned
+  expect_false(is.na((test[[1]]$BestModel)[1]))
+  
+  # Test that there are no NAs in the best model data
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that the best model data has at least 2 columns
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  # Test that there are no NAs in the output dataset
+  expect_equal(length(which(is.na(test[[1]]$Dataset[, 4]))), 0)
+  
+  # Test that all columns were created in the dataset
+  expect_true(ncol(test[[1]]$Dataset) == 17)
+  
+  # Test that the correct number of models were recorded in the dataset
+  expect_equal(maxmodno, nrow(test[[1]]$Dataset))
+  
+  # Test that data was not randomised
+  expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -0.7)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == -0.3)
+  
+})
+
+##############################################################
+
+#Test that code works with weighted linear model
+
+test_that("slidingwin produces the right output when using weights in model", {
+  
+  data("Offspring", envir = environment())
+  data("OffspringClimate", envir = environment())
+  
+  furthest = 2
+  closest = 0
+  
+  test <- slidingwin(xvar = list(OffspringClimate$Temp), cdate = OffspringClimate$Date, bdate = Offspring$Date, 
+                     baseline = lm(Offspring ~ 1, data = Offspring, weight = Order), range = c(2, 0), 
+                     type = "relative", stat = "max", func = "lin", cmissing = FALSE,
+                     cinterval = "month")
+  
+  duration  <- (furthest - closest) + 1
+  maxmodno  <- (duration * (duration + 1))/2
+  
+  # Test that a list has been produced
+  expect_true(is.list(test))
+  
+  # Test that a best model was returned
+  expect_false(is.na((test[[1]]$BestModel)[1]))
+  
+  # Test that there are no NAs in the best model data
+  expect_equal(length(which(is.na(test[[1]]$BestModelData))), 0)
+  
+  # Test that the best model data has at least 2 columns
+  expect_true(ncol(test[[1]]$BestModelData) >= 2)
+  
+  # Test that there are no NAs in the output dataset
+  expect_equal(length(which(is.na(test[[1]]$Dataset[, 4]))), 0)
+  
+  # Test that all columns were created in the dataset
+  expect_true(ncol(test[[1]]$Dataset) == 17)
+  
+  # Test that the correct number of models were recorded in the dataset
+  expect_equal(maxmodno, nrow(test[[1]]$Dataset))
+  
+  # Test that data was not randomised
+  expect_true((test[[1]]$Dataset["Randomised"])[1, ] == "no")
+  
+  #Test the values we get out have stayed the same as our last R version
+  expect_true(round(test[[1]]$Dataset$deltaAICc[1], 1) == -88.6)
+  expect_true(test[[1]]$Dataset$WindowOpen[1] == 2 & test[[1]]$Dataset$WindowClose[1] == 2)
+  expect_true(round(test[[1]]$Dataset$ModelBeta[1], 1) == 0.1)
+  
+})

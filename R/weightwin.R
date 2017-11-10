@@ -26,7 +26,19 @@
 #'  (e.g. number of days before a set point in time).
 #'@param refday If type is absolute, the day and month respectively of the 
 #'  year from which the absolute window analysis will start.
-#'@param cohort A varaible used to group biological records that occur in the same biological
+#'@param cmissing Determines what should be done if there are 
+#'  missing climate data. Three approaches are possible: 
+#'   - FALSE; the function will not run if missing climate data is encountered.
+#'   An object 'missing' will be returned containing the dates of missing climate.
+#'   - "method1"; missing climate data will be replaced with the mean climate
+#'   of the preceding and following 2 records.
+#'   - "method2"; missing climate data will be replaced with the mean climate
+#'   of all records on the same date.
+#'   
+#'   Note: Other methods are possible. Users should consider those methods most
+#'   appropriate for their data and apply them manually before using climwin if
+#'   required.
+#'@param cohort A variable used to group biological records that occur in the same biological
 #'  season but cover multiple years (e.g. southern hemisphere breeding season). Only required
 #'  when type is "absolute". The cohort variable should be in the same dataset as the variable bdate. 
 #'@param weightfunc The distribution to be used for optimisation. Can be 
@@ -35,6 +47,9 @@
 #'  conducted. May be days ("day"), weeks ("week"), or months ("month"). Note the units 
 #'  of parameter 'range' will differ depending on the choice 
 #'  of cinterval.
+#'@param k The number of folds used for k-fold cross validation. By default
+#'  this value is set to 0, so no cross validation occurs. Value should be a
+#'  minimum of 2 for cross validation to occur.
 #'@param spatial A list item containing:
 #'  1. A factor that defines which spatial group (i.e. population) each biological
 #'  record is taken from. The length of this factor should correspond to the length 
@@ -73,10 +88,10 @@
 #'  
 #'  \item Left top panel: The resulting weight function.
 #'  
-#'  \item Right middle panel: The delta AICc compared to the baseline model.
+#'  \item Left middle panel: The delta AICc compared to the baseline model.
 #'  
-#'  \item Right bottom panel: The weighted mean of climate for the current
-#'  weight function. }
+#'  \item Left bottom panel: Plotted relationship between the weighted mean of climate 
+#'  and the biological response variable.}
 #'  
 #'  Also returns a list containing three objects: \itemize{ 
 #'  \item BestModel, a model object. The best weighted window model determined
@@ -131,23 +146,23 @@
 #'@import numDeriv
 #'@export
 
-weightwin <- function(n = 1, xvar, cdate, bdate, baseline, range, 
+weightwin <- function(n = 1, xvar, cdate, bdate, baseline, range, k = 0,
                       func = "lin", type, refday, nrandom = 0, centre = NULL,
-                      weightfunc = "W", cinterval = "day", cohort = NULL, spatial = NULL,
+                      weightfunc = "W", cinterval = "day", cmissing = FALSE, cohort = NULL, spatial = NULL,
                       par = c(3, 0.2, 0), control = list(ndeps = c(0.001, 0.001, 0.001)), 
                       method = "L-BFGS-B", cutoff.day = NULL, cutoff.month = NULL,
                       furthest = NULL, closest = NULL, grad = FALSE){
   
   if(n == 1){
     
-    single_weight <- basewin_weight(n = n, xvar = xvar, cdate = cdate, bdate = bdate,
-                                    baseline = baseline, range = range, func = func,
-                                    type = type, refday = refday, nrandom = nrandom,
-                                    centre = centre, weightfunc = weightfunc,
-                                    cinterval = cinterval, cohort = cohort,
-                                    spatial = spatial, par = par, control = control,
-                                    method = method, cutoff.day = cutoff.day, cutoff.month = cutoff.month,
-                                    furthest = furthest, closest = closest, grad = grad)
+    single_weight <- suppressMessages(basewin_weight(n = n, xvar = xvar, cdate = cdate, bdate = bdate,
+                                                     baseline = baseline, range = range, func = func,
+                                                     type = type, refday = refday, nrandom = nrandom,
+                                                     centre = centre, weightfunc = weightfunc, k = k,
+                                                     cinterval = cinterval, cmissing = cmissing, cohort = cohort,
+                                                     spatial = spatial, par = par, control = control,
+                                                     method = method, cutoff.day = cutoff.day, cutoff.month = cutoff.month,
+                                                     furthest = furthest, closest = closest, grad = grad))
     
     return(single_weight)
     
@@ -215,18 +230,18 @@ weightwin <- function(n = 1, xvar, cdate, bdate, baseline, range,
         
       }
       
-      weight.list[[i]] <- basewin_weight(n = n, xvar = xvar, cdate = cdate, bdate = bdate,
-                                         baseline = baseline, range = range, func = func,
-                                         type = type, refday = refday, nrandom = nrandom,
-                                         centre = centre, weightfunc = weightfunc,
-                                         cinterval = cinterval, cohort = cohort,
-                                         spatial = spatial, par = par, control = control,
-                                         method = method, cutoff.day = cutoff.day, cutoff.month = cutoff.month,
-                                         furthest = furthest, closest = closest, grad = grad)
+      weight.list[[i]] <- suppressMessages(basewin_weight(n = n, xvar = xvar, cdate = cdate, bdate = bdate, k = k,
+                                                          baseline = baseline, range = range, func = func,
+                                                          type = type, refday = refday, nrandom = nrandom,
+                                                          centre = centre, weightfunc = weightfunc,
+                                                          cinterval = cinterval, cmissing = cmissing, cohort = cohort,
+                                                          spatial = spatial, par = par, control = control,
+                                                          method = method, cutoff.day = cutoff.day, cutoff.month = cutoff.month,
+                                                          furthest = furthest, closest = closest, grad = grad))
       
       weight.list[[i]]$WeightedOutput <- merge(save_par, weight.list[[i]]$WeightedOutput)
       
-      par.list[[i]] <- merge(save_par, weight.list[[i]]$WeightedOutput$deltaAICc)
+      par.list[[i]] <- merge(save_par, data.frame(deltaAICc = weight.list[[i]]$WeightedOutput$deltaAICc))
       
       setTxtProgressBar(pb, i - 1)
       
@@ -243,4 +258,4 @@ weightwin <- function(n = 1, xvar, cdate, bdate, baseline, range,
   }
   
 }
-  
+

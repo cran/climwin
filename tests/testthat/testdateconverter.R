@@ -12,7 +12,7 @@ MassClimatedup         <- MassClimate
 MassClimatedup[17533,] <- MassClimatedup[17532,]
 
 test <- convertdate(bdate = Mass$Date, cdate = MassClimate$Date, xvar = MassClimate$Temp,
-                    cinterval = "day", type = "relative", spatial = NULL)
+                    cinterval = "day", type = "relative", spatial = NULL, upper = NA, lower = NA, stat = "mean")
 
 # Test that no NA dates were produced
 expect_equal(length(which(is.na(test))), 0)
@@ -34,6 +34,12 @@ expect_error(convertdate(bdate = Mass$Date, cdate = MassClimate$Date,
 expect_error(convertdate(bdate = Mass$Date, cdate = MassClimatedup$Date,
                          cinterval = "day", type = "relative"))
 
+#Compare to results from previous R version
+expect_true(round(mean(test$xvar), 1) == 9.8)
+expect_true(min(test$bintno) == 493)
+expect_true(max(test$bintno) == 17290)
+expect_true(max(test$cintno) == 17532)
+
 })
 
 # Test convertdate with cinterval = week
@@ -43,7 +49,7 @@ data(Mass, envir = environment())
 data(MassClimate, envir = environment())
 
 test <- convertdate(bdate = Mass$Date, cdate = MassClimate$Date, xvar = MassClimate$Temp,
-                    cinterval = "week", type = "relative", spatial = NULL)
+                    cinterval = "week", type = "relative", spatial = NULL, upper = NA, lower = NA, stat = "mean")
 
 # Test that no NA dates were produced
 expect_equal(length(which(is.na(test))), 0)
@@ -56,6 +62,12 @@ expect_equal(length(test$cintno), length(test$xvar))
 
 # Test that biological dates are in climate dates
 expect_true((max(test$bintno) %in% test$cintno))
+
+#Compare to results from previous R version
+expect_true(round(mean(test$xvar), 1) == 9.9)
+expect_true(min(test$bintno) == 71)
+expect_true(max(test$bintno) == 2462)
+expect_true(max(test$cintno) == 2496)
 
 })
 
@@ -66,7 +78,7 @@ data(Mass, envir = environment())
 data(MassClimate, envir = environment())
 
 test <- convertdate(bdate = Mass$Date, cdate = MassClimate$Date, xvar = MassClimate$Temp,
-                    cinterval = "month", type = "relative", spatial = NULL)
+                    cinterval = "month", type = "relative", spatial = NULL, upper = NA, lower = NA, stat = "mean")
 
 # Test that no NA dates were produced
 expect_equal(length(which(is.na(test))), 0)
@@ -79,6 +91,12 @@ expect_equal(length(test$cintno), length(test$xvar))
 
 # Test that biological dates are in climate dates
 expect_true((max(test$bintno) %in% test$cintno))
+
+#Compare to results from previous R version
+expect_true(round(mean(test$xvar), 1) == 9.8)
+expect_true(min(test$bintno) == 17)
+expect_true(max(test$bintno) == 569)
+expect_true(max(test$cintno) == 576)
 
 })
 
@@ -92,7 +110,7 @@ data(MassClimate, envir = environment())
 
 test <- convertdate(bdate = Mass$Date, cdate = MassClimate$Date, xvar = MassClimate$Temp,
                     xvar2 = MassClimate$Rain, cinterval = "day", type = "relative", cross = TRUE,
-                    spatial = NULL)
+                    spatial = NULL, upper = NA, lower = NA, stat = "mean")
 
 # Test that no NA dates were produced
 expect_equal(length(which(is.na(test))), 0)
@@ -108,6 +126,13 @@ expect_equal(length(test$cintno), length(test$xvar2))
 
 # Test that biological dates are in climate dates
 expect_true((max(test$bintno) %in% test$cintno))
+
+#Compare to results from previous R version
+expect_true(round(mean(test$xvar), 1) == 9.8)
+expect_true(round(mean(test$xvar2), 1) == 2.6)
+expect_true(min(test$bintno) == 493)
+expect_true(max(test$bintno) == 17290)
+expect_true(max(test$cintno) == 17532)
 
 })
 
@@ -119,7 +144,7 @@ data(MassClimate, envir = environment())
 
 test <- convertdate(bdate = Mass$Date, cdate = MassClimate$Date, xvar = MassClimate$Temp,
                     xvar2 = MassClimate$Rain, cinterval = "week", type = "relative", cross = TRUE,
-                    spatial = NULL)
+                    spatial = NULL, upper = NA, lower = NA, stat = "mean")
 
 # Test that no NA dates were produced
 expect_equal(length(which(is.na(test))), 0)
@@ -135,6 +160,13 @@ expect_equal(length(test$cintno), length(test$xvar2))
 
 # Test that biological dates are in climate dates
 expect_true((max(test$bintno) %in% test$cintno))
+
+#Compare to results from previous R version
+expect_true(round(mean(test$xvar), 1) == 9.8)
+expect_true(round(mean(test$xvar2), 1) == 2.6)
+expect_true(min(test$bintno) == 58)
+expect_true(max(test$bintno) == 2496)
+expect_true(max(test$cintno) == 2544)
 
 })
 
@@ -146,7 +178,7 @@ data(MassClimate, envir = environment())
 
 test <- convertdate(bdate = Mass$Date, cdate = MassClimate$Date, xvar = MassClimate$Temp,
                     xvar2 = MassClimate$Rain, cinterval = "month", type = "relative", cross = TRUE,
-                    spatial = NULL)
+                    spatial = NULL, upper = NA, lower = NA, stat = "mean")
 
 # Test that no NA dates were produced
 expect_equal(length(which(is.na(test))), 0)
@@ -162,5 +194,12 @@ expect_equal(length(test$cintno), length(test$xvar2))
 
 # Test that biological dates are in climate dates
 expect_true((max(test$bintno) %in% test$cintno))
+
+#Compare to results from previous R version
+expect_true(round(mean(test$xvar), 1) == 9.8)
+expect_true(round(mean(test$xvar2), 1) == 2.6)
+expect_true(min(test$bintno) == 17)
+expect_true(max(test$bintno) == 569)
+expect_true(max(test$cintno) == 576)
 
 })
