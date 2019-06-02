@@ -75,7 +75,23 @@
 #'  
 #'@author Liam D. Bailey and Martijn van de Pol
 #'@examples
+#'
+#'#Simple test example
+#'#Create data from a subset of our test dataset
+#'#Just use two years
+#'biol_data <- Mass[1:2, ]
+#'clim_data <- MassClimate[grep(pattern = "1979|1986", x = MassClimate$Date), ]
+#'
+#'single <- singlewin(xvar = list(Temp = clim_data$Temp),
+#'                    cdate = clim_data$Date, 
+#'                    bdate = biol_data$Date, 
+#'                    baseline = lm(Mass ~ 1, data = biol_data),
+#'                    range = c(1, 0), 
+#'                    type = "relative", stat = "mean", 
+#'                    func = c("lin"), cmissing = FALSE, cinterval = "day")
+#'
 #'\dontrun{
+#'# Full working example
 #'# Fit a known climate window to the datasets Mass and MassClimate
 #'
 #'data(Mass)
@@ -124,6 +140,10 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     
     stop("bdate is not in the correct format. Please provide date data in dd/mm/yyyy.")
     
+  }
+  
+  if(is.null(cohort) == TRUE){
+    cohort = lubridate::year(as.Date(bdate, format = "%d/%m/%Y"))
   }
   
   thresholdQ <- "N"
@@ -302,7 +322,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     if(is.null(spatial) == FALSE){
       newclim     <- data.frame("cintno" = cintno, "xvar" = xvar, "spatial" = climspatial)
       newclim2    <- melt(newclim, id = c("cintno", "spatial"))
-      newclim3    <- cast(newclim2, cintno + spatial ~ variable, mean, na.rm = T)
+      newclim3    <- cast(newclim2, cintno + spatial ~ variable, stat, na.rm = T)
       newclim3    <- newclim3[order(newclim3$spatial, newclim3$cintno), ]
       cintno      <- newclim3$cintno
       xvar        <- newclim3$xvar
@@ -310,7 +330,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     } else {
       newclim     <- data.frame("cintno" = cintno, "xvar" = xvar)
       newclim2    <- melt(newclim, id = "cintno")
-      newclim3    <- cast(newclim2, cintno ~ variable, mean, na.rm = T)
+      newclim3    <- cast(newclim2, cintno ~ variable, stat, na.rm = T)
       cintno      <- newclim3$cintno
       xvar        <- newclim3$xvar
     }
@@ -371,7 +391,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     if(is.null(spatial) == FALSE){
       newclim     <- data.frame("cintno" = cintno, "xvar" = xvar, "spatial" = climspatial)
       newclim2    <- melt(newclim, id = c("cintno", "spatial"))
-      newclim3    <- cast(newclim2, cintno + spatial ~ variable, mean)
+      newclim3    <- cast(newclim2, cintno + spatial ~ variable, stat)
       newclim3    <- newclim3[order(newclim3$spatial, newclim3$cintno), ]
       cintno      <- newclim3$cintno
       xvar        <- newclim3$xvar
@@ -379,7 +399,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     } else {
       newclim    <- data.frame("cintno" = cintno, "xvar" = xvar)
       newclim2   <- melt(newclim, id = "cintno")
-      newclim3   <- cast(newclim2, cintno ~ variable, mean)
+      newclim3   <- cast(newclim2, cintno ~ variable, stat)
       cintno     <- newclim3$cintno
       xvar       <- newclim3$xvar 
     }
@@ -422,7 +442,15 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     }
   }
   
-  baseline  <- update(baseline, .~.)
+  if(class(baseline)[1] == "lme"){
+    
+    baseline  <- update(baseline, .~.)
+    
+  } else {
+    
+    baseline  <- my_update(baseline, .~.) 
+    
+  }
   nullmodel <- AICc(baseline)  
   modlist   <- list()   # dataframes to store ouput
   cmatrix   <- matrix(ncol = (duration), nrow = length(bdate))
@@ -466,57 +494,57 @@ singlewin <- function(xvar, cdate, bdate, baseline,
       
       if (is.na(upper) == FALSE && is.na(lower) == TRUE){ #...and an upper bound is provided...
         if (binary == TRUE){ #...and we want data to be binary (i.e. it's above the value or it's not)
-          cont$xvar$Clim <- ifelse (cont$xvar$Clim > upper, 1, 0) #Then turn climate data into binary data.
+          xvar$Clim <- ifelse (xvar$Clim > upper, 1, 0) #Then turn climate data into binary data.
         } else { #Otherwise, if binary is not true, simply make all data below the upper limit into 0.
-          cont$xvar$Clim <- ifelse (cont$xvar$Clim > upper, cont$xvar$Clim, 0)
+          xvar$Clim <- ifelse (xvar$Clim > upper, xvar$Clim, 0)
         }
       }
       
       if (is.na(lower) == FALSE && is.na(upper) == TRUE){ #If a lower limit has been provided, do the same.
         if (binary == TRUE){
-          cont$xvar$Clim <- ifelse (cont$xvar$Clim < lower, 1, 0)
+          xvar$Clim <- ifelse (xvar$Clim < lower, 1, 0)
         } else {
-          cont$xvar$Clim <- ifelse (cont$xvar$Clim < lower, cont$xvar$Clim, 0)
+          xvar$Clim <- ifelse (xvar$Clim < lower, xvar$Clim, 0)
         }
       }
       
       if (is.na(lower) == FALSE && is.na(upper) == FALSE){ #If both an upper and lower limit are provided, do the same.
         if (binary == TRUE){
-          cont$xvar$Clim <- ifelse (cont$xvar$Clim > lower && cont$xvar$Clim < upper, 1, 0)
+          xvar$Clim <- ifelse (xvar$Clim > lower && xvar$Clim < upper, 1, 0)
         } else {
-          cont$xvar$Clim <- ifelse (cont$xvar$Clim > lower && cont$xvar$Clim < upper, cont$xvar$Clim - lower, 0)
+          xvar$Clim <- ifelse (xvar$Clim > lower && xvar$Clim < upper, xvar$Clim - lower, 0)
         } 
       }
       
     } else { #Do the same with non-spatial data (syntax is just a bit different, but method is the same.)
       
-      if (is.na(upper) == FALSE && is.na(lower) == TRUE){
+      if (!is.na(upper) && is.na(lower)){
         if (binary == TRUE){
-          cont$xvar <- ifelse (cont$xvar > upper, 1, 0)
+          xvar <- ifelse (xvar > upper, 1, 0)
         } else {
-          cont$xvar <- ifelse (cont$xvar > upper, cont$xvar, 0)
+          xvar <- ifelse (xvar > upper, xvar, 0)
         }
       }
       
       if (is.na(lower) == FALSE && is.na(upper) == TRUE){
         if (binary == TRUE){
-          cont$xvar <- ifelse (cont$xvar < lower, 1, 0)
+          xvar <- ifelse (xvar < lower, 1, 0)
         } else {
-          cont$xvar <- ifelse (cont$xvar < lower, cont$xvar, 0)
+          xvar <- ifelse (xvar < lower, xvar, 0)
         }
       }
       
       if (is.na(lower) == FALSE && is.na(upper) == FALSE){
         if (binary == TRUE){
-          cont$xvar <- ifelse (cont$xvar > lower & cont$xvar < upper, 1, 0)
+          xvar <- ifelse (xvar > lower & xvar < upper, 1, 0)
         } else {
-          cont$xvar <- ifelse (cont$xvar > lower & cont$xvar < upper, cont$xvar - lower, 0)
+          xvar <- ifelse (xvar > lower & xvar < upper, xvar - lower, 0)
         } 
       } 
       
     }
     
-  }  
+  }
   
   if(is.null(spatial) == FALSE){
     cintno = data.frame(Date = cintno, spatial = climspatial)
@@ -537,36 +565,36 @@ singlewin <- function(xvar, cdate, bdate, baseline,
       
       if (cinterval == "day"){ #Where a daily interval is used...
         #...save an object 'missing' with the full dates of all missing data.
-        .GlobalEnv$missing <- as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+        .GlobalEnv$missing <- as.Date(cintno$Date[is.na(xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
       }
       
       if (cinterval == "month"){ #Where a monthly interval is used...
         #...save an object 'missing' with the month and year of all missing data.
-        .GlobalEnv$missing <- c(paste("Month:", cont$cintno$Date[is.na(cont$xvar$Clim)] - (floor(cont$cintno$Date[is.na(cont$xvar$Clim)]/12) * 12),
-                                      #lubridate::month(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
-                                      "Year:", lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))) + floor(cont$cintno$Date[is.na(cont$xvar$Clim)]/12)))
-        #lubridate::year(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+        .GlobalEnv$missing <- c(paste("Month:", cintno$Date[is.na(xvar$Clim)] - (floor(cintno$Date[is.na(xvar$Clim)]/12) * 12),
+                                      #lubridate::month(as.Date(cintno$Date[is.na(xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))) + floor(cintno$Date[is.na(xvar$Clim)]/12)))
+        #lubridate::year(as.Date(cintno$Date[is.na(xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
       }
       if (cinterval == "week"){ #Where weekly data is used...
         #...save an object 'missing' with the week and year of all missing data.
-        .GlobalEnv$missing <- c(paste("Week:", cont$cintno$Date[is.na(cont$xvar$Clim)] - (floor(cont$cintno$Date[is.na(cont$xvar$Clim)]/52) * 52),
-                                      #lubridate::week(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
-                                      "Year:", lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))) + floor(cont$cintno$Date[is.na(cont$xvar$Clim)]/52)))
-        #lubridate::year(as.Date(cont$cintno$Date[is.na(cont$xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
+        .GlobalEnv$missing <- c(paste("Week:", cintno$Date[is.na(xvar$Clim)] - (floor(cintno$Date[is.na(xvar$Clim)]/52) * 52),
+                                      #lubridate::week(as.Date(cintno$Date[is.na(xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)),
+                                      "Year:", lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))) + floor(cintno$Date[is.na(xvar$Clim)]/52)))
+        #lubridate::year(as.Date(cintno$Date[is.na(xvar$Clim)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1))))
       }
     } else { #If spatial data is not provided.
       
       if (cinterval == "day"){ #Do the same for day (syntax is just a bit differen)
-        .GlobalEnv$missing <- as.Date(cont$cintno[is.na(cont$xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
+        .GlobalEnv$missing <- as.Date(cintno[is.na(xvar)], origin = min(as.Date(cdate, format = "%d/%m/%Y")) - 1)
       }
       if (cinterval == "month"){
-        .GlobalEnv$missing <- c(paste("Month:", (lubridate::month(min(as.Date(cdate, format = "%d/%m/%Y"))) + (which(is.na(cont$xvar)) - 1)) - (floor((lubridate::month(min(as.Date(cdate, format = "%d/%m/%Y"))) + (which(is.na(cont$xvar)) - 1))/12)*12),
-                                      "Year:", (floor((which(is.na(cont$xvar)) - 1)/12) + lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))))))
+        .GlobalEnv$missing <- c(paste("Month:", (lubridate::month(min(as.Date(cdate, format = "%d/%m/%Y"))) + (which(is.na(xvar)) - 1)) - (floor((lubridate::month(min(as.Date(cdate, format = "%d/%m/%Y"))) + (which(is.na(xvar)) - 1))/12)*12),
+                                      "Year:", (floor((which(is.na(xvar)) - 1)/12) + lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))))))
       }
       if (cinterval == "week"){
-        .GlobalEnv$missing <- c(paste("Week:", cont$cintno[is.na(cont$xvar)] - (floor(cont$cintno[is.na(cont$xvar)]/52) * 52),
+        .GlobalEnv$missing <- c(paste("Week:", cintno[is.na(xvar)] - (floor(cintno[is.na(xvar)]/52) * 52),
                                       #ceiling(((as.numeric((as.Date(bdate[which(is.na(cmatrix)) - floor(which(is.na(cmatrix))/nrow(cmatrix))*nrow(cmatrix)], format = "%d/%m/%Y"))) - (floor(which(is.na(cmatrix))/nrow(cmatrix))*7)) - as.numeric(as.Date(paste("01/01/", lubridate::year(as.Date(bdate[which(is.na(cmatrix)) - floor(which(is.na(cmatrix))/nrow(cmatrix))*nrow(cmatrix)], format = "%d/%m/%Y")), sep = ""), format = "%d/%m/%Y")) + 1) / 7),
-                                      "Year:", lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))) + floor(cont$cintno[is.na(cont$xvar)]/52)))
+                                      "Year:", lubridate::year(min(as.Date(cdate, format = "%d/%m/%Y"))) + floor(cintno[is.na(xvar)]/52)))
         #lubridate::year(as.Date(bdate[which(is.na(cmatrix)) - floor(which(is.na(cmatrix))/nrow(cmatrix))*nrow(cmatrix)], format = "%d/%m/%Y"))))
       }
     }
@@ -580,7 +608,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
   #If we expect NAs and choose a method to deal with them...
   if (cmissing != FALSE && any(is.na(cmatrix))){
     
-    print("Missing climate data detected. Please wait while NAs are replaced.")
+    message("Missing climate data detected. Please wait while NAs are replaced.")
     
     for(i in which(is.na(cmatrix))){
       
@@ -631,31 +659,31 @@ singlewin <- function(xvar, cdate, bdate, baseline,
           if(is.null(spatial) == FALSE){
             
             #Extract the climate week numbers
-            cdate_new <- data.frame(Date = cont$cintno$Date,
-                                    spatial = cont$cintno$spatial)
+            cdate_new <- data.frame(Date = cintno$Date,
+                                    spatial = cintno$spatial)
             
             #Extract the biological week number that is missing
-            bioldate <- cont$bintno$Date[row]
+            bioldate <- bintno$Date[row]
             
             #Determine from this on which week data is missing
             missingdate <- bioldate - (col + range[2] - 1)
             
             siteID <- spatial[[1]][row]
             
-            cmatrix[row, col] <- mean(cont$xvar$Clim[which(cdate_new$Date %in% c(missingdate - (1:2), missingdate + (1:2)) & cdate_new$spatial %in% siteID)], na.rm = T)
+            cmatrix[row, col] <- mean(xvar$Clim[which(cdate_new$Date %in% c(missingdate - (1:2), missingdate + (1:2)) & cdate_new$spatial %in% siteID)], na.rm = T)
             
           } else {
             
             #Extract the climate week numbers
-            cdate_new <- data.frame(Date = cont$cintno)
+            cdate_new <- data.frame(Date = cintno)
             
             #Extract the biological week number that is missing
-            bioldate <- cont$bintno[row]
+            bioldate <- bintno[row]
             
             #Determine from this on which week data is missing
             missingdate <- bioldate - (col + range[2] - 1)
             
-            cmatrix[row, col] <- mean(cont$xvar[which(cdate_new$Date %in% c(missingdate - (1:2), missingdate + (1:2)))], na.rm = T)
+            cmatrix[row, col] <- mean(xvar[which(cdate_new$Date %in% c(missingdate - (1:2), missingdate + (1:2)))], na.rm = T)
             
           }
           
@@ -706,11 +734,11 @@ singlewin <- function(xvar, cdate, bdate, baseline,
           if(is.null(spatial) == FALSE){
             
             #Extract the climate week numbers
-            cdate_new <- data.frame(Date = cont$cintno$Date,
-                                    spatial = cont$cintno$spatial)
+            cdate_new <- data.frame(Date = cintno$Date,
+                                    spatial = cintno$spatial)
             
             #Extract the biological week number that is missing
-            bioldate <- cont$bintno$Date[row]
+            bioldate <- bintno$Date[row]
             
             #Determine from this on which week data is missing
             missingdate <- bioldate - (col + range[2] - 1)
@@ -736,15 +764,15 @@ singlewin <- function(xvar, cdate, bdate, baseline,
             
             siteID <- spatial[[1]][row]
             
-            cmatrix[row, col] <- mean(cont$xvar$Clim[which(cdate_new$Date %in% missingdate & cdate_new$spatial %in% siteID)], na.rm = T)
+            cmatrix[row, col] <- mean(xvar$Clim[which(cdate_new$Date %in% missingdate & cdate_new$spatial %in% siteID)], na.rm = T)
             
           } else {
             
             #Extract the climate week numbers
-            cdate_new <- data.frame(Date = cont$cintno)
+            cdate_new <- data.frame(Date = cintno)
             
             #Extract the biological week number that is missing
-            bioldate <- cont$bintno[row]
+            bioldate <- bintno[row]
             
             #Determine from this on which week data is missing
             missingdate <- bioldate - (col + range[2] - 1)
@@ -768,7 +796,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
               
             }
             
-            cmatrix[row, col] <- mean(cont$xvar[which(cdate_new$Date %in% missingdate)], na.rm = T)
+            cmatrix[row, col] <- mean(xvar[which(cdate_new$Date %in% missingdate)], na.rm = T)
             
           }
         }
@@ -786,21 +814,28 @@ singlewin <- function(xvar, cdate, bdate, baseline,
       }
     }
   }
-  
-  modeldat$climate <- matrix(ncol = 1, nrow = nrow(modeldat), seq(from = 1, to = nrow(modeldat), by = 1))
 
+  #Check to see if the model contains a weight function. If so, incorporate this into the data used for updating the model.
   if (is.null(weights(baseline)) == FALSE){
-    if (class(baseline)[1] == "glm" & sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" & sum(weights(baseline)) == nrow(model.frame(baseline))){
+    if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
     } else {
-      modeldat$modweights <- weights(baseline)
-      baseline <- update(baseline, .~., weights = modeldat$modweights, data = modeldat)
+      
+      modeldat$model_weights  <- weights(baseline)
+      #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+      
+      call <- as.character(getCall(baseline))
+      
+      weight_name <- call[length(call)]
+      
+      names(modeldat)[length(names(modeldat))] <- weight_name
+      
     }
   }
   
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, REML = F)
     
@@ -808,7 +843,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
   
   if(attr(baseline, "class")[1] == "lme" && baseline$method == "REML"){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, method = "ML")
     
@@ -817,7 +852,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, REML = F)
     
@@ -825,9 +860,20 @@ singlewin <- function(xvar, cdate, bdate, baseline,
   
   if(attr(baseline, "class")[1] == "lme" && baseline$method == "REML"){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, method = "ML")
+    
+  }
+  
+  #Create a new dummy variable called climate, that is made up all of 1s (unless it's using lme, because this will cause errors).
+  if(attr(baseline, "class")[1] == "lme"){
+    
+    modeldat$climate <- seq(1, nrow(modeldat), 1)
+    
+  } else {
+    
+    modeldat$climate <- 1
     
   }
 
@@ -856,7 +902,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
       modeloutput     <- update(baseline, yvar ~. + wgdev, data = modeldat)
     }
   } else {
-    print("Define func")
+    stop("Define func")
   }
 
   #CREATE A FOR LOOP TO FIT DIFFERENT CLIMATE WINDOWS#
@@ -865,7 +911,7 @@ singlewin <- function(xvar, cdate, bdate, baseline,
 
   #Save the best model output
   if (stat == "slope"){
-    time             <- seq(1, n, 1)
+    time             <- n:1
     modeldat$climate <- apply(cmatrix, 1, FUN = function(x) coef(lm(x ~ time))[2])
   } else {
     ifelse(n == 1, modeldat$climate <- cmatrix, modeldat$climate <- apply(cmatrix, 1, FUN = stat))
@@ -889,5 +935,5 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     LocalBestModel <- update(modeloutput, .~., data = modeldat)
   }
   LocalData <- model.frame(LocalBestModel)
-  return(list(BestModel = LocalBestModel, BestModelData = LocalData, Dataset = data.frame(ModelAICc = AICc(LocalBestModel), deltaAICc = AICc(LocalBestModel) - nullmodel, WindowOpen = range[1], WindowClose = range[2])))
+  return(list(BestModel = LocalBestModel, BestModelData = LocalData, Dataset = data.frame(ModelAICc = AICc(LocalBestModel), deltaAICc = AICc(LocalBestModel) - nullmodel, WindowOpen = range[1], WindowClose = range[2], Function = func)))
 }

@@ -4,14 +4,14 @@
 \alias{randwin}
 \title{Climate window analysis for randomised data}
 \usage{
-randwin(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, bdate,
-  baseline, stat, range, func, type, refday, cmissing = FALSE,
+randwin(exclude = NA, repeats = 5, window = "sliding", xvar, cdate,
+  bdate, baseline, stat, range, func, type, refday, cmissing = FALSE,
   cinterval = "day", spatial = NULL, cohort = NULL, upper = NA,
   lower = NA, binary = FALSE, centre = list(NULL, "both"), k = 0,
-  weightfunc = "W", par = c(3, 0.2, 0), control = list(ndeps = c(0.01,
-  0.01, 0.01)), method = "L-BFGS-B", cutoff.day = NULL,
-  cutoff.month = NULL, furthest = NULL, closest = NULL, thresh = NULL,
-  cvk = NULL)
+  weightfunc = "W", par = c(3, 0.2, 0), control = list(ndeps =
+  c(1e-02, 1e-02, 1e-02)), method = "L-BFGS-B", cutoff.day = NULL,
+  cutoff.month = NULL, furthest = NULL, closest = NULL,
+  thresh = NULL, cvk = NULL)
 }
 \arguments{
 \item{exclude}{Two values (distance and duration) which allow users
@@ -141,7 +141,24 @@ Randomises biological data and carries out a climate window analysis. Used
 to help determine the chance of obtaining an observed result at random.
 }
 \examples{
+
+#Simple test example
+#Create data from a subset of our test dataset
+#Just use two years
+biol_data <- Mass[1:2, ]
+clim_data <- MassClimate[grep(pattern = "1979|1986", x = MassClimate$Date), ]
+
+rand <- randwin(repeats = 1, xvar = list(Temp = clim_data$Temp),
+               cdate = clim_data$Date, 
+               bdate = biol_data$Date, 
+               baseline = lm(Mass ~ 1, data = biol_data),
+               range = c(1, 0), 
+               type = "relative", stat = "mean", 
+               func = c("lin"), cmissing = FALSE, cinterval = "day")
+
 \dontrun{
+
+# Full working examples
 
 ## EXAMPLE 1 ##
 

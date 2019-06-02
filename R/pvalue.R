@@ -60,17 +60,17 @@ pvalue <- function(dataset, datasetrand, metric, sample.size){
     
     if(sample.size > 47){
       sample.size = 47
-      print("Pc will be overly conservative when sample size is greater than 47")
+      warning("Pc will be overly conservative when sample size is greater than 47")
     } else if(sample.size < 10){
       sample.size = 10
-      print("Pc will be overly liberal when sample size is less than 10")
+      warning("Pc will be overly liberal when sample size is less than 10")
     }
     
     WeightDist <- sum(as.numeric(cumsum(dataset$ModWeight) <= 0.95))/nrow(dataset)
     
     DeltaW <- WeightDist - median(datasetrand$WeightDist)
       
-      if(dataset$K[1] >= 10){
+      if(dataset$K[1] >= 1){
         Pc <- (1/(1 + exp(-1 * (-0.621031 + 11.563537 * DeltaW + 0.058663 * sample.size + 6.882248 * DeltaW * sample.size))))
       } else {
         Pc <- (1/(1 + exp(-1 * (-0.540324 + 1.947674 * DeltaW + 0.078708 * sample.size + 0.313567 * DeltaW * sample.size))))

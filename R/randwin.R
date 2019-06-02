@@ -96,7 +96,24 @@
 #'  window from each randomisation. See \code{\link{MassRand}} as an example.
 #'@author Liam D. Bailey and Martijn van de Pol
 #' @examples
-#' \dontrun{
+#'
+#'#Simple test example
+#'#Create data from a subset of our test dataset
+#'#Just use two years
+#'biol_data <- Mass[1:2, ]
+#'clim_data <- MassClimate[grep(pattern = "1979|1986", x = MassClimate$Date), ]
+#'
+#'rand <- randwin(repeats = 1, xvar = list(Temp = clim_data$Temp),
+#'                cdate = clim_data$Date, 
+#'                bdate = biol_data$Date, 
+#'                baseline = lm(Mass ~ 1, data = biol_data),
+#'                range = c(1, 0), 
+#'                type = "relative", stat = "mean", 
+#'                func = c("lin"), cmissing = FALSE, cinterval = "day")
+#' 
+#'\dontrun{
+#'
+#'# Full working examples
 #'
 #'## EXAMPLE 1 ##
 #'
@@ -158,8 +175,6 @@ randwin <- function(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, 
                     method = "L-BFGS-B", cutoff.day = NULL, cutoff.month = NULL,
                     furthest = NULL, closest = NULL, thresh = NULL, cvk = NULL){
   
-  fast = FALSE
-  
   #Create a centre function that over-rides quadratics etc. when centre != NULL
   if(is.null(centre[[1]]) == FALSE){
     func = "centre"
@@ -197,6 +212,21 @@ randwin <- function(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, 
   }
   
   if(window == "sliding"){
+    
+    if((!is.na(upper) || !is.na(lower)) && (cinterval == "week" || cinterval == "month")){
+      
+      thresholdQ <- readline("You specified a climate threshold using upper and/or lower and are working at a weekly or monthly scale. 
+                             Do you want to apply this threshold before calculating weekly/monthly means (i.e. calculate thresholds for each day)? Y/N")
+      
+      thresholdQ <- toupper(thresholdQ)
+      
+      if(thresholdQ != "Y" & thresholdQ != "N"){
+        
+        thresholdQ <- readline("Please specify yes (Y) or no (N)")
+        
+      }
+      
+    }
     
     if (is.na(upper) == FALSE && is.na(lower) == FALSE){
       combos       <- expand.grid(list(upper = upper, lower = lower))
@@ -239,13 +269,13 @@ randwin <- function(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, 
   }
   
   rownames(allcombos) <- seq(1, nrow(allcombos), 1)
-  print("All combinations to be tested...")
-  print(allcombos)
+  # message("All combinations to be tested...")
+  # message(allcombos)
   
   combined <- list()
   for (combo in 1:nrow(allcombos)){
     for (r in 1:repeats){
-      print (c("randomization number ", r))
+      message(c("randomization number ", r))
       
       rand.rows <- sample(length(bdate))
       
@@ -271,7 +301,7 @@ randwin <- function(exclude = NA, repeats = 5, window = "sliding", xvar, cdate, 
                              upper = ifelse(binarylevel == "two" || binarylevel == "upper", allcombos$upper[combo], NA),
                              lower = ifelse(binarylevel == "two" || binarylevel == "lower", allcombos$lower[combo], NA),
                              binary = paste(allcombos$binary[combo]), centre = centre, k = k, spatial = spatialNew,
-                             cohort = cohort, fast = fast)
+                             cohort = cohort, randwin = TRUE, randwin_thresholdQ = thresholdQ)
         
         outputrep$Repeat <- r
         WeightDist <- sum(as.numeric(cumsum(outputrep$ModWeight) <= 0.95))/nrow(outputrep)

@@ -62,8 +62,8 @@
 #'                    type = "absolute", refday = c(20, 5), 
 #'                    cmissing = FALSE, cinterval = "day")
 #'            
-#'plotall(dataset = MassOutput, bestmodel = single$bestmodel, 
-#'        bestmodeldata = single$bestmodeldata,
+#'plotall(dataset = MassOutput, bestmodel = single$BestModel, 
+#'        bestmodeldata = single$BestModelData,
 #'        cw1 = 0.95, cw2 = 0.5, cw3 = 0.25, title = "Mass")
 #'         
 #'          
@@ -78,7 +78,7 @@ plotall <- function(dataset, datasetrand = NULL,
 
     if (class(bestmodel)[length(class(bestmodel))] == "coxph" | class(bestmodel)[1] == "lme") {
       bestmodel = NULL
-      print("sorry plotall cannot yet plot the best model panel for a coxph or nlme models")
+      warning("plotall cannot yet plot the best model panel for a coxph or nlme models")
     }
   
   a       <- c(cw1, cw2, cw3)
@@ -96,7 +96,7 @@ plotall <- function(dataset, datasetrand = NULL,
     
     window <- plotwin(dataset = dataset, cw = cwa)
     
-    print("Plot of model coefficients and best model output is unavailable when using custom models.")
+    message("Plot of model coefficients and best model output is unavailable when using custom models.")
     
     gridExtra::grid.arrange(plotenv$delta, plotenv$cw, window, nrow = 1, ncol = 3, top = paste(title))
     
@@ -110,7 +110,7 @@ plotall <- function(dataset, datasetrand = NULL,
   
   window <- plotwin(dataset = dataset, cw = cwa)
 
-  if(is.null(datasetrand) == FALSE){
+  if(!is.null(datasetrand)){
     hist   <- plothist(dataset = dataset, datasetrand = datasetrand)    
     
   if(is.null(bestmodel) == FALSE && is.null(bestmodeldata) == FALSE){
@@ -156,7 +156,7 @@ plotall <- function(dataset, datasetrand = NULL,
   }
 } else {
   
-  if(is.null(bestmodel) == FALSE && is.null(bestmodeldata) == FALSE){
+  if(!is.null(bestmodel) && !is.null(bestmodeldata)){
     best  <- plotbest(dataset = dataset, bestmodel = bestmodel, bestmodeldata = bestmodeldata)
     
     if (dataset$Function[1] == "lin"){

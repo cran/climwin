@@ -52,7 +52,23 @@
 #'  climate variables.
 #'@author Liam D. Bailey and Martijn van de Pol
 #'@examples
+#'
+#'#Simple test example
+#'#Create data from a subset of our test dataset
+#'#Just use two years
+#'biol_data <- Mass[1:2, ]
+#'clim_data <- MassClimate[grep(pattern = "1979|1986", x = MassClimate$Date), ]
+#'                    
+#'cross <- crosswin(xvar  = list(Temp = clim_data$Temp),
+#'                  xvar2 = list(Rain = clim_data$Rain),
+#'                  cdate = clim_data$Date, bdate = biol_data$Date,
+#'                  range = c(1, 0), 
+#'                  stat = "mean", stat2 = "mean",
+#'                  type = "relative",
+#'                  cmissing = FALSE, cinterval = "day")
+#'
 #'\dontrun{
+#'# Full working example
 #'# Test correlation between temperature and rainfall in the MassClimate dataset.
 #' 
 #'data(Mass)
@@ -82,7 +98,7 @@ crosswin <- function(xvar, xvar2, cdate, bdate, range,
                      cutoff.day = NULL, cutoff.month = NULL,
                      furthest = NULL, closest = NULL){
   
-  print("Initialising, please wait...")
+  message("Initialising, please wait...")
   
   #Check date formats
   if(all(is.na(as.Date(cdate, format = "%d/%m/%Y")))){
@@ -211,7 +227,7 @@ crosswin <- function(xvar, xvar2, cdate, bdate, range,
   
   if (cmissing != FALSE && length(which(is.na(cmatrix1))) > 0 | cmissing != FALSE && length(which(is.na(cmatrix2))) > 0){
     
-    print("Missing climate data detected. Please wait while appropriate data is calculated to replace NAs.")
+    message("Missing climate data detected. Please wait while appropriate data is calculated to replace NAs.")
     
     if(cmissing == "method1"){
       

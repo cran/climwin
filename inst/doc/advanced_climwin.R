@@ -70,6 +70,20 @@ library(climwin)
 
 ## ---- eval = FALSE-------------------------------------------------------
 #  
+#  SizeWin <- slidingwin(xvar = list(Temp = SizeClimate$Temperature),
+#                        cdate = SizeClimate$Date,
+#                        bdate = Size$Date,
+#                        baseline = lm(Size ~ 1, data = Size),
+#                        cohort = Size$Cohort,
+#                        cinterval = "day",
+#                        range = c(150, 0),
+#                        type = "absolute", refday = c(01, 10),
+#                        stat = "mean",
+#                        func = "lin")
+#  
+
+## ---- eval = FALSE-------------------------------------------------------
+#  
 #  MassWin <- slidingwin(xvar = list(Temp = Climate$Temp),
 #                        cdate = Climate$Date,
 #                        bdate = Biol$Date,

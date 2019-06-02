@@ -50,19 +50,14 @@ plotdelta <- function(dataset, arrow = FALSE, plotall = FALSE, plotallenv, Three
     #rgl.surface(x, y, matrix(1, nrow(z), ncol(z)), color = "grey", alpha = 0.5, back = "fill")
     
   } else {
-  
+    
 with(dataset, {
   if(arrow == FALSE){
     ARR <-   ggplot(dataset, aes(x = WindowClose, y = WindowOpen, z = deltaAICc))+
       geom_tile(aes(fill = deltaAICc))+
       scale_fill_gradientn(colours = c("red", "yellow", "blue"), name = "")+
-      theme_classic()+
-      theme(panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            axis.line = element_line(size=0.25, colour = "black"),
-            plot.title = element_text(size = 16, hjust = 0.5),
-            legend.position = c(0.75, 0.3),
-            panel.border = element_rect(colour = "black", fill = NA))+
+      theme_climwin()+
+      theme(legend.position = c(0.75, 0.3))+
       ggtitle(expression(paste(Delta, "AICc (compared to null model)")))+
       ylab("Window open")+
       xlab("Window close")
@@ -80,13 +75,8 @@ with(dataset, {
     ARR <-   ggplot(dataset, aes(x = WindowClose, y = WindowOpen, z = deltaAICc))+
       geom_tile(aes(fill = deltaAICc))+
       scale_fill_gradientn(colours = c("red", "yellow", "blue"), name = "")+
-      theme_classic()+
-      theme(panel.grid.major = element_blank(),
-            panel.grid.minor = element_blank(),
-            axis.line = element_line(size=0.25, colour = "black"),
-            plot.title = element_text(size = 16, hjust = 0.5),
-            legend.position = c(0.75, 0.3),
-            panel.border = element_rect(colour = "black", fill = NA))+
+      theme_climwin()+
+      theme(legend.position = c(0.75, 0.3))+
       ggtitle(expression(paste(Delta, "AICc (compared to null model)")))+
       ylab("Window open") +
       xlab("Window close") +

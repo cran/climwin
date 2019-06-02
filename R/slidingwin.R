@@ -79,10 +79,6 @@
 #'  2. A factor that defines which spatial group (i.e. population) climate data
 #'  corresponds to. This length of this factor should correspond to the length of
 #'  the climate dataset.
-#'@param cutoff.day,cutoff.month Redundant parameters. Now replaced by refday.
-#'@param furthest,closest Redundant parameters. Now replaced by range.
-#'@param thresh Redundant parameter. Now replaced by binary.
-#'@param cvk Redundant parameter. Now replaced by k.
 #'@return Will return a list with an output for each tested set of climate
 #'  window parameters. Each list item contains three objects:
 #'  
@@ -110,7 +106,25 @@
 #'@importFrom nlme varExp  
 #'@importFrom nlme lme.formula
 #'@examples
+#'
+#'#Simple test example
+#'#Create data from a subset of our test dataset
+#'#Just use two years
+#'biol_data <- Mass[1:2, ]
+#'clim_data <- MassClimate[grep(pattern = "1979|1986", x = MassClimate$Date), ]
+#'
+#'output <- slidingwin(xvar = list(Temp = clim_data$Temp),
+#'                     cdate = clim_data$Date, 
+#'                     bdate = biol_data$Date, 
+#'                     baseline = lm(Mass ~ 1, data = biol_data),
+#'                     range = c(1, 0), 
+#'                     type = "relative", stat = "mean", 
+#'                     func = c("lin"), cmissing = FALSE, cinterval = "day")
+#'
 #'\dontrun{
+#'
+#'# Full working examples
+#'
 #'##EXAMPLE 1## 
 #'  
 #'# Test both a linear and quadratic variable climate window using datasets "Offspring"
@@ -190,12 +204,9 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
                        type, refday, stat = "mean", func = "lin", range, 
                        cmissing = FALSE, cinterval = "day", k = 0,
                        upper = NA, lower = NA, binary = FALSE, centre = list(NULL, "both"),
-                       spatial = NULL, cohort = NULL, 
-                       cutoff.day = NULL, cutoff.month = NULL, 
-                       furthest = NULL, closest = NULL,
-                       thresh = NULL, cvk = NULL){
+                       spatial = NULL, cohort = NULL){
   
-  fast = FALSE
+  #### INITIAL CHECKS ####
   
   if(cmissing != FALSE && cmissing != "method1" && cmissing != "method2"){
     
@@ -217,24 +228,18 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
     stop("Sorry, cross-validation is not available yet for coxph models")
   }
   
-  if(is.null(cvk) == FALSE){
-    stop("Parameter 'cvk' is now redundant. Please use parameter 'k' instead.")
+  #If the baseline model is fitted with nlme and cross validation is requested, return an error.
+  if(attr(baseline, "class")[1] == "lme" && k > 0){
+    
+    stop("Sorry, cross-validation is currently not functioning for nlme models. Consider using lme4 if possible.")
+    
   }
   
-  if(is.null(thresh) == FALSE){
-    stop("Parameter 'thresh' is now redundant. Please use parameter 'binary' instead.")
-  }
-  
-  if(type == "variable" || type == "fixed"){
-    stop("Parameter 'type' now uses levels 'relative' and 'absolute' rather than 'variable' and 'fixed'.")
-  }
-  
-  if(is.null(cutoff.day) == FALSE && is.null(cutoff.month) == FALSE){
-    stop("cutoff.day and cutoff.month are now redundant. Please use parameter 'refday' instead.")
-  }
-  
-  if(is.null(furthest) == FALSE && is.null(closest) == FALSE){
-    stop("furthest and closest are now redundant. Please use parameter 'range' instead.")
+  #If spatial information is not specified, check that there are no duplicate calendar dates.
+  if(is.null(spatial) & length(unique(cdate)) < length(cdate)){
+    
+    stop("Your cdate variable has repeated date measures. Do you have climate data from multiple sites? If so, you should specify the parameter `spatial`.")
+    
   }
   
   #Create a centre function that over-rides quadratics etc. when centre != NULL
@@ -273,27 +278,25 @@ slidingwin <- function(exclude = NA, xvar, cdate, bdate, baseline,
   }
   
   rownames(allcombos) <- seq(1, nrow(allcombos), 1)
-  print("All combinations to be tested...")
-  print(allcombos)
+  # message("All combinations to be tested...")
+  # message(allcombos)
   
   combined <- list()
   for (combo in 1:nrow(allcombos)){
-    runs <- suppressMessages(basewin(exclude = exclude, xvar = xvar[[paste(allcombos[combo, 1])]], cdate = cdate, bdate = bdate, baseline = baseline,
+    runs <- basewin(exclude = exclude, xvar = xvar[[paste(allcombos[combo, 1])]], cdate = cdate, bdate = bdate, baseline = baseline,
                     range = range, type = paste(allcombos[combo, 2]), refday = refday, stat = paste(allcombos[combo, 3]), func = paste(allcombos[combo, 4]),
                     cmissing = cmissing, cinterval = cinterval, k = k, 
                     upper = ifelse(binarylevel == "two" || binarylevel == "upper", allcombos$upper[combo], NA),
                     lower = ifelse(binarylevel == "two" || binarylevel == "lower", allcombos$lower[combo], NA),
                     binary = paste(allcombos$binary[combo]), centre = centre, cohort = cohort,
-                    spatial = spatial, fast = fast))
-    
-    #return(runs)
+                    spatial = spatial)
     
     combined[[combo]]            <- runs
     allcombos$DeltaAICc[combo]   <- round(runs$Dataset$deltaAICc[1], digits = 2)
     allcombos$WindowOpen[combo]  <- runs$Dataset$WindowOpen[1]
     allcombos$WindowClose[combo] <- runs$Dataset$WindowClose[1]
     
-    if(all(!colnames(model.frame(baseline)) %in% "climate")){
+    if(any(grepl("climate", model.frame(baseline)))){
       
       if(length(which("lin" == levels(allcombos$func))) >0){
         allcombos$betaL[combo] <- round(runs$Dataset$ModelBeta[1], digits = 2)

@@ -1,25 +1,25 @@
 #############################################################################################################
 
-#climatewin is now redundant, will transfer straight to slidingwin with message
-climatewin <- function(exclude = NA, xvar, cdate, bdate, baseline, 
-                       type, refday, stat = "mean", func = "lin", range, 
-                       cmissing = FALSE, cinterval = "day", k = 0,
-                       upper = NA, lower = NA, binary = FALSE, centre = list(NULL, "both"),
-                       spatial = NULL, cutoff.day = NULL, cutoff.month = NULL, 
-                       furthest = NULL, closest = NULL,
-                       thresh = NULL, cvk = NULL, cohort = NULL){
-  
-  print("PLEASE NOTE: Function 'climatewin' is being made redundant. Please use 'slidingwin' as an alternative")
-  
-  slidingwin(exclude = exclude, xvar = xvar, cdate = cdate, bdate = bdate, baseline = baseline, 
-             type = type, refday = refday, stat = stat, func = func, range = range, 
-             cmissing = cmissing, cinterval = cinterval, k = k,
-             upper = upper, lower = lower, binary = binary, centre = centre,
-             spatial = spatial, cutoff.day = cutoff.day, cutoff.month = cutoff.month, 
-             furthest = furthest, closest = closest,
-             thresh = thresh, cvk = cvk, cohort = cohort)
-  
-}
+# #climatewin is now redundant, will transfer straight to slidingwin with message
+# climatewin <- function(exclude = NA, xvar, cdate, bdate, baseline, 
+#                        type, refday, stat = "mean", func = "lin", range, 
+#                        cmissing = FALSE, cinterval = "day", k = 0,
+#                        upper = NA, lower = NA, binary = FALSE, centre = list(NULL, "both"),
+#                        spatial = NULL, cutoff.day = NULL, cutoff.month = NULL, 
+#                        furthest = NULL, closest = NULL,
+#                        thresh = NULL, cvk = NULL, cohort = NULL){
+#   
+#   print("PLEASE NOTE: Function 'climatewin' is being made redundant. Please use 'slidingwin' as an alternative")
+#   
+#   slidingwin(exclude = exclude, xvar = xvar, cdate = cdate, bdate = bdate, baseline = baseline, 
+#              type = type, refday = refday, stat = stat, func = func, range = range, 
+#              cmissing = cmissing, cinterval = cinterval, k = k,
+#              upper = upper, lower = lower, binary = binary, centre = centre,
+#              spatial = spatial, cutoff.day = cutoff.day, cutoff.month = cutoff.month, 
+#              furthest = furthest, closest = closest,
+#              thresh = thresh, cvk = cvk, cohort = cohort)
+#   
+# }
 
 ###########################################################################################################
 
@@ -27,108 +27,172 @@ climatewin <- function(exclude = NA, xvar, cdate, bdate, baseline,
 basewin <- function(exclude, xvar, cdate, bdate, baseline, range, 
                     type, stat = "mean", func = "lin", refday,
                     cmissing = FALSE, cinterval = "day", nrandom = 0, k = 0,
-                    spatial, upper = NA, lower = NA, binary = FALSE, centre = list(NULL, "both"),
-                    cohort = NULL, fast){
+                    spatial, upper = NA, lower = NA, binary = FALSE, scale = FALSE, centre = list(NULL, "both"),
+                    cohort = NULL, randwin = FALSE, randwin_thresholdQ){
   
-  print("Initialising, please wait...")
+  message("Initialising, please wait...")
   
   options(warn = 0, nwarnings = 1)
   
-  #Check date formats
+  ##########################################################################
+  
+  #### INITIAL CHECKS ####
+  
+  #Check that climate date data is in the correct date format
   if(all(is.na(as.Date(cdate, format = "%d/%m/%Y")))){
     
     stop("cdate is not in the correct format. Please provide date data in dd/mm/yyyy.")
     
   }
   
+  #Check that biological date data is in the correct date format
   if(all(is.na(as.Date(bdate, format = "%d/%m/%Y")))){
     
     stop("bdate is not in the correct format. Please provide date data in dd/mm/yyyy.")
     
   }
   
-  if(attr(baseline, "class")[1] == "lme" && k > 0){
+  #If the user wants to use slope with log or inverse...
+  if (stat == "slope" && func == "log" || stat == "slope" && func == "inv"){
     
-    stop("Sorry, cross-validation is currently not functioning for nlme models. Consider using lme4 if possible.")
-    
+    #Return an error...
+    stop("stat = slope cannot be used with func = log or inv as negative values may be present")
   }
   
-  thresholdQ <- "N"
-  
-  if((!is.na(upper) || !is.na(lower)) && (cinterval == "week" || cinterval == "month")){
+  #If the user has centred the data
+  if(!is.null(centre[[1]])){
     
-    thresholdQ <- readline("You specified a climate threshold using upper and/or lower and are working at a weekly or monthly scale. 
-                           Do you want to apply this threshold before calculating weekly/monthly means (i.e. calculate thresholds for each day)? Y/N")
-    
-    thresholdQ <- toupper(thresholdQ)
-    
-    if(thresholdQ != "Y" & thresholdQ != "N"){
-      
-      thresholdQ <- readline("Please specify yes (Y) or no (N)")
-      
-    }
-    
-  }
-  
-  if(is.null(spatial) == FALSE){
-      
-    sample.size <- 0
-    data <- data.frame(bdate = bdate, spatial = spatial[[1]], cohort = as.factor(cohort))
-      
-    for(i in levels(as.factor(data$cohort))){
-        
-      sub <- subset(data, cohort = i)
-      sub$spatial <- factor(sub$spatial)
-      sample.size <- sample.size + length(levels(sub$spatial))
-        
-    }
-    
-  } else if(is.null(spatial) == TRUE) {
-    
-    sample.size <- length(levels(as.factor(cohort)))
-  
-  }
-  
-  if(is.null(centre[[1]]) == FALSE){
+    #But they haven't specified whether they want within and/or between group...
     if(centre[[2]] != "both" && centre[[2]] != "dev" && centre[[2]] != "mean"){
+      
+      #Return an error...
       stop("Please set centre to one of 'both', 'dev', or 'mean'. See help file for details.")
     }
   }
   
-  if (stat == "slope" && func == "log" || stat == "slope" && func == "inv"){
-    stop("stat = slope cannot be used with func = log or inv as negative values may be present")
+  ##########################################################################
+  
+  #### DEALING WITH THRESHOLDS ####
+  
+  #By default, don't ask a question about how you want to apply the thresholds.
+  thresholdQ <- "N"
+  
+  #If you are not using randwin, then ask the question about how thresholds should be applied.
+  if(randwin == FALSE){
+    
+    #If you have specified an upper or lower value for which a threshold should be applied and you are not working at a daily scale...
+    if((!is.na(upper) || !is.na(lower)) && (cinterval == "week" || cinterval == "month")){
+      
+      #Determine whether the user wants to: 1. apply the threshold at the daily level BEFORE estimating monthly/weekly mean (i.e. daily data is binary but monthly/weekly is not)
+      #                                     2. apply the threshold AFTER applying monthly/weekly mean (i.e. daily data is non-binary, monthly/weekly is)
+      thresholdQ <- readline("You specified a climate threshold using upper and/or lower and are working at a weekly or monthly scale. 
+                           Do you want to apply this threshold before calculating weekly/monthly means (i.e. calculate thresholds for each day)? Y/N")
+      
+      #Convert to upper case for logical conditions
+      thresholdQ <- toupper(thresholdQ)
+      
+      #If they didn't specify a Y/N answer, ask again.
+      if(thresholdQ != "Y" & thresholdQ != "N"){
+        
+        thresholdQ <- readline("Please specify yes (Y) or no (N)")
+        
+      }
+      
+    }
+  
+  #If they are using randwin, make a decision based on earlier specified argument.    
+  } else {
+    
+    if((!is.na(upper) || !is.na(lower)) && (cinterval == "week" || cinterval == "month")){
+      
+      thresholdQ <- randwin_thresholdQ
+      
+    }
+    
   }
   
+  ##########################################################################
+  
+  #### SPATIAL REPLICATION ####
+  
+  #If spatial info has been provided...
+  if(!is.null(spatial)){
+    
+    #Create a data frame with the biological data and its spatial information.  
+    sample.size <- 0
+    data <- data.frame(bdate = bdate, spatial = spatial[[1]], cohort = as.factor(cohort))
+    
+    #For each cohort (usually year, but may also be breeding period)...  
+    for(i in unique(data$cohort)){
+        
+      #Take a subset of the data for that cohort...
+      sub <- subset(data, cohort = i)
+      #Relevel spatial...
+      sub$spatial <- factor(sub$spatial)
+      #Add 1 to sample size for every site in each cohort.
+      sample.size <- sample.size + length(levels(sub$spatial))
+        
+    }
+  
+  #If spatial is not provided...
+  } else if(is.null(spatial)) {
+    
+    #Sample size is just the length of cohorts (i.e. number of years)
+    sample.size <- length(unique(cohort))
+  
+  }
+  
+  ##########################################################################
+  
+  #PROCESS DATA INTO CLIMWIN FORMAT
+  
+  #Duration of searching period is the difference between the two levels or range + 1 (e.g. also including day 0)
   duration  <- (range[1] - range[2]) + 1
+  #Determine maximum number of potential windows to fit.
   maxmodno  <- (duration * (duration + 1))/2
-  if (length(exclude) == 2){ maxmodno  <- maxmodno - exclude[1] * (duration - exclude[2] - 1) + (exclude[1] - 1) * exclude[1] / 2 }
+  
+  #If the user has provided exclude data (i.e. there are certain windows that will not be considered)...
+  if (length(exclude) == 2){
+    
+    #Remove these excluded windows from the estimate of maximum number of windows.
+    maxmodno  <- maxmodno - exclude[1] * (duration - exclude[2] - 1) + (exclude[1] - 1) * exclude[1] / 2
+    
+  }
+  
+  #If slope stat is used...
   if (stat == "slope") { 
+    
+    #Adjust number of models...
     ifelse(is.na(exclude[2]) == TRUE,  maxmodno  <- maxmodno - duration, maxmodno  <- maxmodno - exclude[2] - 1)
+  
   }
   
   #Convert date information in to numbers and apply absolute window info (if appropriate)
+  #This code creates a new climate dataframe with continuous daynumbers, leap days are not a problem
   cont      <- convertdate(bdate = bdate, cdate = cdate, xvar = xvar, 
                            cinterval = cinterval, type = type, 
                            refday = refday, cohort = cohort, spatial = spatial, stat = stat, 
-                           binary = binary, upper = upper, lower = lower, thresholdQ = thresholdQ)   # create new climate dataframe with continuous daynumbers, leap days are not a problem
+                           binary = binary, upper = upper, lower = lower, thresholdQ = thresholdQ)   
   
-  #return(cont)
-  
-  if(is.null(spatial) == FALSE){ #If spatial data is provided...
+  if(!is.null(spatial)){ #If spatial data is provided...
     
-    for(i in levels(as.factor(spatial[[1]]))){ #For each site...
+    for(i in unique(spatial[[1]])){ #For each site...
       
       SUB_clim <- subset(cont$cintno, spatial == i) # ...subset the date numbers from climate data...
       SUB_biol <- subset(cont$bintno, spatial == i) # ...subset the date numbers from biological data...
       
       #Check that you have enough data to go back the specified range at EACH SITE
       if ((min(SUB_biol$Date) - range[1]) < min(SUB_clim$Date)){
+        
         stop(paste("At site ", i, " you do not have enough climate data to search ", range[1], " ", cinterval, "s back. Please adjust the value of range or add additional climate data.", sep = ""))
+      
       }
       
       #Check that you have enough data to start in the specified range at EACH SITE
       if (max(SUB_biol$Date) - range[2] > max(SUB_clim$Date)){
+        
         stop(paste("At site ", i, " you need more recent climate data. The most recent climate data is from ", max(SUB_clim$Date), " while the most recent biological data is from ", max(SUB_biol$Date), sep = ""))
+      
       }
     }
     
@@ -141,7 +205,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
     
     #Check that you have enough data to start in the specified range
     if ((max(cont$bintno) - range[2] - 1) > max(cont$cintno)){
-      stop(paste("You need more recent climate data. The most recent climate data is from ", max(as.Date(cdate, format = "%d/%m/%Y")), " while the most recent biological data is from ", max(as.Date(bdate, format = "%d/%m/%Y")), sep = ""))
+      stop(paste("You need more recent climate data to test over this range. The most recent climate data is from ", max(as.Date(cdate, format = "%d/%m/%Y")), " while the most recent biological data is from ", max(as.Date(bdate, format = "%d/%m/%Y")), sep = ""))
     }
     
   }
@@ -150,9 +214,25 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   cmatrix   <- matrix(ncol = (duration), nrow = length(bdate))  # matrix that stores the weather data for variable or fixed windows
   
   modlist   <- list()   # dataframes to store ouput
-  baseline  <- update(baseline, .~.)
+  if(class(baseline)[1] == "lme"){
+    
+    baseline  <- update(baseline, .~.)
+    
+  } else {
+    
+    baseline  <- my_update(baseline, .~.) 
+    
+  }
   nullmodel <- MuMIn::AICc(baseline)
   modeldat  <- model.frame(baseline)
+  
+  #If there are any variables that have been scaled (i.e. using scale(x)) we need to change the model data to remove the scale argument.
+  #If not, the model.frame output has a column scale(x) but the model during update is looking for x.
+  if(any(grepl("scale\\(|\\)", colnames(modeldat)))){
+    
+    colnames(modeldat) <- gsub("scale\\(|\\)", "", colnames(modeldat))
+    
+  }
   
   if(attr(baseline, "class")[1] == "lme"){ #If model is fitted using nlme package
     
@@ -317,7 +397,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   #If we expect NAs and choose a method to deal with them...
   if (cmissing != FALSE && any(is.na(cmatrix))){
     
-    print("Missing climate data detected. Please wait while NAs are replaced.")
+    message("Missing climate data detected. Please wait while NAs are replaced.")
     
     for(i in which(is.na(cmatrix))){
       
@@ -546,7 +626,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
       
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, REML = F)
       
@@ -554,17 +634,25 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   
   if(attr(baseline, "class")[1] == "lme" && baseline$method == "REML"){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, method = "ML")
     
   }
 
   #If there are no variables in the baseline model called climate (i.e. the user has not specified more complex role for climate in the model, such as an interaction or random effects.)
-  if(all(!colnames(modeldat) %in% "climate")){
+  if(all(!grepl("climate", colnames(modeldat)))){
     
-    #Create a new dummy variable called climate, that is made up all of 1s.
-    modeldat$climate <- matrix(ncol = 1, nrow = nrow(modeldat), seq(from = 1, to = nrow(modeldat), by = 1))
+    #Create a new dummy variable called climate, that is made up all of 1s (unless it's using lme, because this will cause errors).
+    if(attr(baseline, "class")[1] == "lme"){
+      
+      modeldat$climate <- seq(1, nrow(modeldat), 1)
+      
+    } else {
+      
+      modeldat$climate <- 1
+      
+    }
     
     #Update the baseline model to include this new variable in the required format (e.g. linear, quadratic etc.)
     if (func == "lin"){
@@ -592,7 +680,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
         modeloutput <- update (baseline, yvar ~. + wgdev, data = modeldat)
       }
     } else {
-      print("Define func")
+      stop("Define func")
     }
     
   } else {
@@ -605,7 +693,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   }
   
   #If cross validation has been specified...
-  if (k > 1){
+  if (k >= 1){
     modeldat$K <- sample(seq(from = 1, to = length(modeldat$climate), by = 1) %% k + 1)
   }   # create labels k-fold crossvalidation
   
@@ -624,7 +712,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
           windowclose <- windowopen - n + 1 #Determine the windowclose time (i.e. the more recent point where the window FINISHES)
           
           if (stat == "slope"){ #If we are using the slope function
-            time             <- seq(1, n, 1) #Determine the number of days over which we will calculate slope.
+            time             <- n:1 #Determine the number of days over which we will calculate slope.
             #Determine the slope (i.e. change in climate over time)
             modeldat$climate <- apply(cmatrix[, windowopen:windowclose], 1, FUN = function(x) coef(lm(x ~ time))[2])
           } else {
@@ -733,7 +821,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
           }
           
           # If valid, perform k-fold crossvalidation
-          if (k > 1) {      
+          if (k >= 1) {      
             for (k in 1:k) {
               test                     <- subset(modeldat, modeldat$K == k) # Create the test dataset
               train                    <- subset(modeldat, modeldat$K != k) # Create the train dataset
@@ -785,13 +873,13 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
           modlist$WindowClose[[modno]] <- m - n + 1
           
           #Extract model coefficients (syntax is slightly different depending on the model type e.g. lme4 v. nlme v. lm)
-          if(any(colnames(model.frame(baseline)) %in% "climate")){
+          if(any(grepl("climate", colnames(model.frame(baseline))))){
   
               coefs <- coef(summary(modeloutput))[, 1:2]
               
               temp.df <- data.frame("Y", t(coefs[-1, 1]), t(coefs[-1, 2]))
               
-              colnames(temp.df) <- c("Custom.mod", rownames(coefs)[-1], paste(rownames(coefs)[-1], "SE", sep = ""))
+              colnames(temp.df) <- c("Custom.mod", gsub("scale\\(|\\)", "", rownames(coefs)[-1]), paste(gsub("scale\\(|\\)", "", rownames(coefs)[-1]), "SE", sep = ""))
               
               coef_data[[modno]] <- temp.df
             
@@ -983,7 +1071,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   windowopen  <- m[1] - range[2] + 1
   windowclose <- windowopen - n[1] + 1
   if (stat == "slope"){
-    time      <- seq(1, n[1], 1)
+    time      <- n[1]:1
     modeldat$climate <- apply(cmatrix[, windowclose:windowopen], 1, FUN = function(x) coef(lm(x ~ time))[2])
   } else {
     ifelse (windowopen - windowclose == 0, 
@@ -991,7 +1079,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
             modeldat$climate <- apply(cmatrix[, windowclose:windowopen], 1, FUN = stat))
   }
   
-  if (is.null(centre[[1]]) == FALSE){
+  if (!is.null(centre[[1]])){
     if (centre[[2]] == "both"){
         modeldat$WGdev   <- wgdev(modeldat$climate, centre[[1]])
         modeldat$WGmean  <- wgmean(modeldat$climate, centre[[1]])
@@ -1075,8 +1163,6 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
       LocalData         <- model.frame(LocalModel)
       LocalData$climate <- modeldat$climate
     } else {
-      #print(modeldat)
-      #return(LocalModel)
       LocalData <- model.frame(LocalModel)
       
       if(attr(LocalModel, "class")[1] == "lme"){
@@ -1090,6 +1176,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
       }
       
     }
+    
     modlist$Randomised    <- "no"
     modlist               <- as.data.frame(modlist)
     LocalOutput           <- modlist[order(modlist$ModelAICc), ]
@@ -1162,7 +1249,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
       sample.size <- 0
       data <- data.frame(bdate = bdate, spatial = as.factor(spatial[[1]]), cohort = as.factor(cohort))
       
-      for(i in levels(as.factor(data$cohort))){
+      for(i in unique(data$cohort)){
         
         sub <- subset(data, cohort = i)
         sub$spatial <- factor(sub$spatial)
@@ -1176,7 +1263,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
       data <- data.frame(bdate = bdate, spatial = as.factor(spatial[[1]]))
       data$Year <- lubridate::year(as.Date(data$bdate, format = "%d/%m/%Y"))
       
-      for(i in levels(as.factor(data$Year))){
+      for(i in unique(data$Year)){
         
         sub <- subset(data, data$Year == i)
         sub$spatial <- factor(sub$spatial)
@@ -1189,9 +1276,9 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
   } else if(is.null(spatial) == TRUE) {
     
     if(is.null(cohort) == FALSE){
-      sample.size <- length(levels(as.factor(cohort)))
+      sample.size <- length(unique(cohort))
     } else {
-      sample.size <- length(levels(as.factor(lubridate::year(as.Date(bdate, format = "%d/%m/%Y")))))
+      sample.size <- length(unique(lubridate::year(as.Date(bdate, format = "%d/%m/%Y"))))
     }  
   }
   
@@ -1301,7 +1388,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
   #If we expect NAs and choose a method to deal with them...
   if (cmissing != FALSE && any(is.na(cmatrix))){
     
-    print("Missing climate data detected. Please wait while NAs are replaced.")
+    message("Missing climate data detected. Please wait while NAs are replaced.")
     
     for(i in which(is.na(cmatrix))){
       
@@ -1530,7 +1617,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, REML = F)
     
@@ -1538,7 +1625,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
   
   if(attr(baseline, "class")[1] == "lme" && baseline$method == "REML"){
     
-    print("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
+    message("Linear mixed effects models are run in climwin using maximum likelihood. Baseline model has been changed to use maximum likelihood.")
     
     baseline <- update(baseline, yvar ~., data = modeldat, method = "ML")
     
@@ -1573,7 +1660,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
         modeloutput <- update(baseline, yvar ~. + wgdev, data = modeldat)
       }
     } else {
-      print("Define func")
+      stop("Define func")
     } 
     
   } else {
@@ -1652,7 +1739,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
     
     if(n == 1){
       
-      print(result)
+      message(result)
       
     }
     
@@ -1685,14 +1772,14 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
     
     if(n == 1){
       
-      print(result)
+      message(result)
       
     }
     
   } else if (weightfunc == "U"){
     
     if(length(par) > 2){
-      print("Uniform distribution only uses two parameters (start and end). All other parameter values are ignored.")
+      warning("Uniform distribution only uses two parameters (start and end). All other parameter values are ignored.")
     }
     
     if(par[1] > range[1]){
@@ -1730,7 +1817,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
     
     if(n == 1){
       
-      print(result)
+      message(result)
       
     }
     
@@ -1939,24 +2026,40 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
                         refday, cross = FALSE, cohort, spatial, stat, 
                         upper, lower, binary, thresholdQ = NA){
   
+  ######################################################################
+  
+  #INITIAL CHECKS
   
   if (cinterval != "day" && cinterval != "week" && cinterval != "month"){
     stop("cinterval should be either day, week or month")
   }
   
-  bdate  <- as.Date(bdate, format = "%d/%m/%Y") # Convert the bdate variables into the R date format
-  if(is.null(spatial) == FALSE) { # If there is spatial replication (i.e. multiple sites are used)...
+  ######################################################################
+  
+  # Convert the bdate variables into the R date format
+  bdate  <- as.Date(bdate, format = "%d/%m/%Y")
+  
+  # If there is spatial replication (i.e. multiple sites are used)...
+  if(!is.null(spatial)) {
+    
     SUB.DATE <- list()
     NUM <- 1
-    for(i in levels(as.factor(spatial[[2]]))){ # For every listed site...
+    
+    for(i in unique(spatial[[2]])){ # For every listed site...
+      
       SUB <- cdate[which(spatial[[2]] == i)] # Extract the date data from this site...
+      
       SUB.DATE[[NUM]] <- data.frame(Date = seq(min(as.Date(SUB, format = "%d/%m/%Y")), max(as.Date(SUB, format = "%d/%m/%Y")), "days"),
                                     spatial = i) # Save this data in its own dataframe, with all possible dates within the range for that site only.
+      
       if (length(SUB.DATE[[NUM]]$Date) != length(unique(SUB.DATE[[NUM]]$Date))){
         stop ("There are duplicate dayrecords in climate data") # Check there are no duplicates within each site...
       }
+      
       NUM <- NUM + 1
+    
     }
+    
     spatialcdate <- plyr::rbind.fill(SUB.DATE) # Combine all date data from each site together...
     cdate2       <- spatialcdate$Date # Save this new date data as cdate2..
     cintno       <- as.numeric(cdate2) - min(as.numeric(cdate2)) + 1   # atrribute daynumbers for both climate and biological data with first date in the climate data set to cintno 1
@@ -1969,18 +2072,19 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
       stop ("There are duplicate dayrecords in climate data") # Check for duplicate date information. 
     }
   }
+  
   cdate  <- as.Date(cdate, format = "%d/%m/%Y") # Also have an object saving the original date information (this way we can work out where climate data is missing!)
 
   if(is.null(spatial) == FALSE){ # If spatial data is provided...
     
-    for(i in levels(as.factor(spatial[[2]]))){ # For each possible spatial site...
+    for(i in unique(spatial[[2]])){ # For each possible spatial site...
       
       SUB <- cdate[which(spatial[[2]] == i)] # Extract the cdate information for each site
       SUB_biol <- bdate[which(spatial[[1]] == i)] # Extract the bdate information for each site
       if (min(SUB) > min(SUB_biol)){ # Check that the earliest climate data is before the earliest biological data...
         stop(paste("Climate data does not cover all years of biological data at site ", i ,". Earliest climate data is ", min(cdate), " Earliest biological data is ", min(bdate), ". Please increase range of climate data", sep = ""))
       }
-      if (max(SUB) <= max(SUB_biol)){ # Check that the latest climate data is after or the same time as the latest biological data...
+      if (max(SUB) < max(SUB_biol)){ # Check that the latest climate data is after or the same time as the latest biological data...
         stop(paste("Climate data does not cover all years of biological data at site ", i ,". Latest climate data is ", max(cdate), " Latest biological data is ", max(bdate), ". Please increase range of climate data", sep = ""))
       }
     }
@@ -1990,7 +2094,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
       stop(paste("Climate data does not cover all years of biological data. Earliest climate data is ", min(cdate), ". Earliest biological data is ", min(bdate), sep = ""))
     }
     
-    if (max(cdate) <= max(bdate)){
+    if (max(cdate) < max(bdate)){
       stop(paste("Climate data does not cover all years of biological data. Earliest climate data is ", max(cdate), ". Earliest biological data is ", max(bdate), sep = ""))
     }
     
@@ -2049,7 +2153,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
         newdat   <- cbind(as.data.frame(bdate), as.data.frame(cohort)) #Combine biological data with cohort info (N.B. when cohort isn't provided, it will be made the year of capture by default. See code at start of slidingwin).
         datenum  <- 1
         bintno   <- seq(1, length(bdate), 1)
-        for(i in levels(as.factor(cohort))){ # For each cohort (i.e. year, unless specified otherwise)...
+        for(i in unique(cohort)){ # For each cohort (i.e. year, unless specified otherwise)...
           sub                               <- subset(newdat, cohort == i) # ...subset bdate data from that cohort...
           # As we are using an absolute value, determine the biological date number as refday/minimum year in the cohort (i.e. assume they are in the previous year) - earliest cdate
           bintno[as.numeric(rownames(sub))] <- as.numeric(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) - min(as.numeric(cdate2)) + 1
@@ -2135,7 +2239,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
         newdat   <- cbind(as.data.frame(bdate), as.data.frame(cohort)) #Combine date numbers from biological data with the cohort (year by default)
         datenum  <- 1
         bintno   <- seq(1, length(bdate), 1)
-        for(i in levels(as.factor(cohort))){ # For each cohort...
+        for(i in unique(cohort)){ # For each cohort...
           sub                               <- subset(newdat, cohort == i) #...subset out biological date data
           #Turn this date info into the same values based on refday
           bintno[as.numeric(rownames(sub))] <- lubridate::month(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) + 53 * (min(lubridate::year(sub$bdate)) - min(year(cdate2)))
@@ -2209,7 +2313,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
           newdat   <- cbind(as.data.frame(bdate), as.data.frame(cohort)) #Bind biological date and cohort info (year by default)
           datenum  <- 1
           bintno   <- seq(1, length(bdate), 1)
-          for(i in levels(as.factor(cohort))){ #For each year...
+          for(i in unique(cohort)){ #For each year...
             sub                               <- subset(newdat, cohort == i) #Extract biological date info
             #Set the biological date the same for each cohort.
             bintno[as.numeric(rownames(sub))] <- refday[2] + 12 * (min(lubridate::year(sub$bdate)) - min(lubridate::year(cdate2)))
@@ -2224,7 +2328,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
         newdat   <- cbind(as.data.frame(bdate), as.data.frame(cohort)) #Combine biological date and cohort info (year by default)
         datenum  <- 1
         bintno   <- seq(1, length(bdate), 1)
-        for(i in levels(as.factor(cohort))){ #For each cohort group...
+        for(i in unique(cohort)){ #For each cohort group...
           sub                               <- subset(newdat, cohort == i) #...subset out data.
           #Set all records within a cohort to the same value
           bintno[as.numeric(rownames(sub))] <- as.numeric(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) - min(as.numeric(cdate2)) + 1
@@ -2261,7 +2365,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
         newdat   <- cbind(as.data.frame(bdate), as.data.frame(cohort)) #Combine biological data and cohort (year by default)
         datenum  <- 1
         bintno   <- seq(1, length(bdate), 1)
-        for(i in levels(as.factor(cohort))){ #For each cohort...
+        for(i in unique(cohort)){ #For each cohort...
           sub                               <- subset(newdat, cohort == i) #...subset data.
           #Create the same week value for every record in the same cohort.
           bintno[as.numeric(rownames(sub))] <- lubridate::month(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) + 53 * (min(lubridate::year(sub$bdate)) - min(year(cdate2)))
@@ -2295,7 +2399,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
         newdat   <- cbind(as.data.frame(bdate), as.data.frame(cohort)) #Extract date data and cohort (year by default)
         datenum  <- 1
         bintno   <- seq(1, length(bdate), 1)
-        for(i in levels(as.factor(cohort))){ #For each cohort
+        for(i in unique(cohort)){ #For each cohort
           sub                               <- subset(newdat, cohort == i) #Subset data
           #Set each record within a cohort to have the same month
           bintno[as.numeric(rownames(sub))] <- refday[2] + 12 * (min(lubridate::year(sub$bdate)) - min(lubridate::year(cdate2)))
@@ -2643,53 +2747,6 @@ my_update <- function(mod, formula = NULL, data = NULL) {
 
 ##################################################################################
 
-#Function to determine within group mean and deviance for centring
-
-wgdev <- function(covar, groupvar) {
-  a            <- unique(factor(groupvar))
-  groups       <- length(a)
-  temp         <- rep(NA, groups)
-  observations <- length(covar)
-  groupmean    <- rep(NA, observations)
-  groupdev     <- rep(NA, observations)
-  
-  for (i in 1:groups){
-    b       <- which(groupvar == a[i])
-    temp[i] <- mean(covar[b], na.rm=TRUE)
-  }
-  
-  for (j in 1:observations){
-    c            <- which(a == groupvar[j])
-    groupmean[j] <- temp[c]
-    groupdev[j]  <- covar[j] - groupmean[j]
-  }
-  return(groupdev)
-}
-
-wgmean <- function(covar, groupvar){
-  a            <- unique(factor(groupvar))
-  groups       <- length(a)
-  observations <- length(covar)
-  temp         <- rep(NA, groups)
-  groupmean    <- rep(NA, observations)
-  groupdev     <- rep(NA, observations)
-  
-  for (i in 1:groups){
-    b       <- which(groupvar == a[i])
-    temp[i] <- mean(covar[b], na.rm=TRUE)
-  }
-  
-  for (j in 1:observations){
-    c            <- which(a == groupvar[j])
-    groupmean[j] <- temp[c]
-    groupdev[j]  <- covar[j] - groupmean[j]
-  }
-  groupmean[which(is.nan(groupmean)==TRUE)]<-NA
-  return(groupmean)
-}
-
-##################################################################################
-
 skim <- function(winoutput, duration, cutoff) {
   winoutput$Duration <- winoutput$WindowOpen - winoutput$WindowClose
   winoutput$Filter   <- winoutput$WindowOpen * 0
@@ -2737,3 +2794,118 @@ withOptions <- function(optlist, expr){
 }
 
 #################################################################################
+
+#Theme for ggplots
+theme_climwin <- function(base_size = 12, base_family = "",
+                         base_line_size = base_size / 20,
+                         base_rect_size = base_size / 20,
+                         legend = "none") {
+  half_line <- base_size / 2
+  
+  theme(
+    # Elements in this first block aren't used directly, but are inherited
+    # by others. These set the defaults for line, rectangle and text elements.
+    line =               element_line(
+      colour = "black", size = base_line_size,
+      linetype = 1, lineend = "round"
+    ),
+    rect =               element_rect(
+      fill = "white", colour = "black",
+      size = base_rect_size, linetype = 1
+    ),
+    text =               element_text(
+      family = base_family, face = "plain",
+      colour = "black", size = base_size,
+      lineheight = 0.9, hjust = 0.5, vjust = 0.5, angle = 0,
+      margin = margin(), debug = FALSE
+    ),
+    
+    axis.line =          element_blank(),
+    axis.line.x =        NULL,
+    axis.line.y =        NULL,
+    axis.text =          element_text(size = rel(0.8), colour = "black", face = "bold"),
+    axis.text.x =        element_text(margin = margin(t = 0.8 * half_line / 2), vjust = 1),
+    axis.text.x.top =    element_text(margin = margin(b = 0.8 * half_line / 2), vjust = 0),
+    axis.text.y =        element_text(margin = margin(r = 0.8 * half_line / 2), hjust = 1),
+    axis.text.y.right =  element_text(margin = margin(l = 0.8 * half_line / 2), hjust = 0),
+    axis.ticks =         element_line(colour = "black", lineend = "round", size = 1),
+    axis.ticks.length =  unit(half_line / 2, "pt"),
+    axis.title.x =       element_text(
+      margin = margin(t = half_line * 1.5),
+      vjust = 1,
+      face = "bold"
+    ),
+    axis.title.x.top =   element_text(
+      margin = margin(b = half_line),
+      vjust = 0,
+      face = "bold"
+    ),
+    axis.title.y =       element_text(
+      angle = 90,
+      margin = margin(r = half_line * 1.5),
+      vjust = 0,
+      face = "bold"
+    ),
+    axis.title.y.right = element_text(
+      angle = -90,
+      margin = margin(l = half_line),
+      vjust = 0,
+      face = "bold"
+    ),
+    
+    legend.background = element_rect(colour = NA),
+    legend.spacing = unit(2 * half_line, "pt"),
+    legend.spacing.x = NULL, 
+    legend.spacing.y = NULL,
+    legend.margin = margin(half_line, half_line, half_line, half_line),
+    legend.key = element_rect(fill = "grey95", colour = "white"),
+    legend.key.size = unit(1.2, "lines"), 
+    legend.key.height = NULL,
+    legend.key.width = NULL,
+    legend.position = legend,
+    legend.text = element_text(family = base_family, size = rel(1)),
+    
+    panel.background =   element_rect(fill = "white", colour = NA),
+    panel.border =       element_rect(colour = "black", fill = NA, size = 1.5),
+    panel.grid.major =   element_blank(),
+    panel.grid.minor =   element_blank(),
+    panel.spacing =      unit(half_line, "pt"),
+    panel.spacing.x =    NULL,
+    panel.spacing.y =    NULL,
+    panel.ontop    =     FALSE,
+    
+    strip.background =   element_rect(fill = NA, colour = "black"),
+    strip.text =         element_text(
+      colour = "black",
+      size = rel(0.8),
+      margin = margin(half_line, half_line, half_line, half_line)
+    ),
+    strip.text.x =       NULL,
+    strip.text.y =       element_text(angle = -90),
+    strip.placement =    "inside",
+    strip.placement.x =  NULL,
+    strip.placement.y =  NULL,
+    strip.switch.pad.grid = unit(0.1, "cm"),
+    strip.switch.pad.wrap = unit(0.1, "cm"),
+    
+    plot.background =    element_rect(colour = "white"),
+    plot.title =         element_text(
+      size = rel(1.2),
+      hjust = 0.5, vjust = 1,
+      margin = margin(b = half_line * 1.2)
+    ),
+    plot.subtitle =      element_text(
+      size = rel(0.9),
+      hjust = 0.5, vjust = 1,
+      margin = margin(b = half_line * 0.9)
+    ),
+    plot.caption =       element_text(
+      size = rel(0.9),
+      hjust = 0.5, vjust = 1,
+      margin = margin(t = half_line * 0.9)
+    ),
+    plot.margin =        margin(half_line, half_line, half_line, half_line),
+    
+    complete = TRUE
+  )
+}

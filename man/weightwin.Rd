@@ -4,12 +4,13 @@
 \alias{weightwin}
 \title{Find a weighted climate window}
 \usage{
-weightwin(n = 1, xvar, cdate, bdate, baseline, range, k = 0, func = "lin",
-  type, refday, nrandom = 0, centre = NULL, weightfunc = "W",
-  cinterval = "day", cmissing = FALSE, cohort = NULL, spatial = NULL,
-  par = c(3, 0.2, 0), control = list(ndeps = c(0.001, 0.001, 0.001)),
-  method = "L-BFGS-B", cutoff.day = NULL, cutoff.month = NULL,
-  furthest = NULL, closest = NULL, grad = FALSE)
+weightwin(n = 1, xvar, cdate, bdate, baseline, range, k = 0,
+  func = "lin", type, refday, nrandom = 0, centre = NULL,
+  weightfunc = "W", cinterval = "day", cmissing = FALSE,
+  cohort = NULL, spatial = NULL, par = c(3, 0.2, 0),
+  control = list(ndeps = c(1e-03, 1e-03, 1e-03)), method = "L-BFGS-B",
+  cutoff.day = NULL, cutoff.month = NULL, furthest = NULL,
+  closest = NULL, grad = FALSE)
 }
 \arguments{
 \item{n}{The number of iterations used to run weightwin. If n > 1, iterations 
@@ -141,7 +142,26 @@ Generalised Extreme Value (GEV) distribution. See references for a full
 description.
 }
 \examples{
- \dontrun{
+
+#Simple test example
+#Create data from a subset of our test dataset
+biol_data <- Mass[1:5, ]
+data(MassClimate)
+
+
+weight <- weightwin(xvar = list(Temp = MassClimate$Temp), 
+                   cdate = MassClimate$Date, 
+                   bdate = biol_data$Date, 
+                   baseline = glm(Mass ~ 1, data = biol_data), 
+                   range = c(100, 0), func = "lin", 
+                   type = "relative", weightfunc = "W", cinterval = "day", 
+                   par = c(2.26, 8.45, 0), control = list(ndeps = c(0.01, 0.01, 0.01)), 
+                   method = "L-BFGS-B")
+                   
+
+\dontrun{
+
+# Full working example
  
 # Test for a weighted average over a fixed climate window 
 # using datasets 'Offspring' and 'OffspringClimate'
