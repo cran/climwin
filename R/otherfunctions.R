@@ -171,7 +171,7 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   #This code creates a new climate dataframe with continuous daynumbers, leap days are not a problem
   cont      <- convertdate(bdate = bdate, cdate = cdate, xvar = xvar, 
                            cinterval = cinterval, type = type, 
-                           refday = refday, cohort = cohort, spatial = spatial, stat = stat, 
+                           refday = refday, cohort = cohort, spatial = spatial, 
                            binary = binary, upper = upper, lower = lower, thresholdQ = thresholdQ)   
   
   if(!is.null(spatial)){ #If spatial data is provided...
@@ -607,21 +607,43 @@ basewin <- function(exclude, xvar, cdate, bdate, baseline, range,
   }
   
   #Check to see if the model contains a weight function. If so, incorporate this into the data used for updating the model.
-  if (is.null(weights(baseline)) == FALSE){
-    if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
-    } else {
-      
-      modeldat$model_weights  <- weights(baseline)
-      #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
-      
-      call <- as.character(getCall(baseline))
-      
-      weight_name <- call[length(call)]
-      
-      names(modeldat)[length(names(modeldat))] <- weight_name
-      
-    }
+  if("(weights)" %in% colnames(model.frame(baseline))){
+    
+    modeldat$model_weights  <- weights(baseline)
+    #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+    
+    call <- as.character(getCall(baseline))
+    
+    weight_name <- call[length(call)]
+    
+    names(modeldat)[length(names(modeldat))] <- weight_name
+    
   }
+  # if (is.null(weights(baseline)) == FALSE){
+  #   if(class(baseline) == "lm"){
+  #     
+  #     if(!is.null(weights(baseline))){
+  #       
+  #       
+  #       
+  #     }
+  #     
+  #   }
+  #   if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
+  #     
+  #   } else {
+  #     
+  #     modeldat$model_weights  <- weights(baseline)
+  #     #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+  #     
+  #     call <- as.character(getCall(baseline))
+  #     
+  #     weight_name <- call[length(call)]
+  #     
+  #     names(modeldat)[length(names(modeldat))] <- weight_name
+  #     
+  #   }
+  # }
   
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
@@ -1598,21 +1620,33 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
   }
   
   #Check to see if the model contains a weight function. If so, incorporate this into the data used for updating the model.
-  if (is.null(weights(baseline)) == FALSE){
-    if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
-    } else {
-      
-      modeldat$model_weights  <- weights(baseline)
-      #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
-      
-      call <- as.character(getCall(baseline))
-      
-      weight_name <- call[length(call)]
-      
-      names(modeldat)[length(names(modeldat))] <- weight_name
-      
-    }
+  if("(weights)" %in% colnames(model.frame(baseline))){
+    
+    modeldat$model_weights  <- weights(baseline)
+    #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+    
+    call <- as.character(getCall(baseline))
+    
+    weight_name <- call[length(call)]
+    
+    names(modeldat)[length(names(modeldat))] <- weight_name
+    
   }
+  # if (is.null(weights(baseline)) == FALSE){
+  #   if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
+  #   } else {
+  #     
+  #     modeldat$model_weights  <- weights(baseline)
+  #     #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+  #     
+  #     call <- as.character(getCall(baseline))
+  #     
+  #     weight_name <- call[length(call)]
+  #     
+  #     names(modeldat)[length(names(modeldat))] <- weight_name
+  #     
+  #   }
+  # }
   
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
@@ -2023,7 +2057,7 @@ basewin_weight <- function(n, xvar, cdate, bdate, baseline, range,
 
 #Function to convert dates into day/week/month number
 convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type, 
-                        refday, cross = FALSE, cohort, spatial, stat, 
+                        refday, cross = FALSE, cohort, spatial, 
                         upper, lower, binary, thresholdQ = NA){
   
   ######################################################################
@@ -2242,7 +2276,7 @@ convertdate <- function(bdate, cdate, xvar, xvar2 = NULL, cinterval, type,
         for(i in unique(cohort)){ # For each cohort...
           sub                               <- subset(newdat, cohort == i) #...subset out biological date data
           #Turn this date info into the same values based on refday
-          bintno[as.numeric(rownames(sub))] <- lubridate::month(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) + 53 * (min(lubridate::year(sub$bdate)) - min(year(cdate2)))
+          bintno[as.numeric(rownames(sub))] <- lubridate::week(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) + 52 * (min(lubridate::year(sub$bdate)) - min(year(cdate2)))
             #lubridate::week(as.Date(paste(refday[1], refday[2], min(lubridate::year(sub$bdate)), sep = "-"), format = "%d-%m-%Y")) - min(cweek + 53 * cyear) + 1
         }
       } else { #...Otherwise just leave the biological date info as is.

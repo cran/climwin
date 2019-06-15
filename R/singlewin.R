@@ -129,6 +129,16 @@ singlewin <- function(xvar, cdate, bdate, baseline,
                       centre = list(NULL, "both"), cutoff.day = NULL, cutoff.month = NULL,
                       furthest = NULL, closest = NULL, thresh = NULL){
   
+  ### Implementing scientific notation can cause problems because years
+  ### are converted to characters in scientific notation (e.g. 2000 = "2e+3")
+  ### Check options and convert scipen TEMPORARILY if needed.
+  if(getOption("scipen") < 0){
+    
+    current_option <- getOption("scipen")
+    options(scipen = 0)
+    
+  }
+  
   #Check date formats
   if(all(is.na(as.Date(cdate, format = "%d/%m/%Y")))){
     
@@ -816,21 +826,33 @@ singlewin <- function(xvar, cdate, bdate, baseline,
   }
 
   #Check to see if the model contains a weight function. If so, incorporate this into the data used for updating the model.
-  if (is.null(weights(baseline)) == FALSE){
-    if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
-    } else {
-      
-      modeldat$model_weights  <- weights(baseline)
-      #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
-      
-      call <- as.character(getCall(baseline))
-      
-      weight_name <- call[length(call)]
-      
-      names(modeldat)[length(names(modeldat))] <- weight_name
-      
-    }
+  if("(weights)" %in% colnames(model.frame(baseline))){
+    
+    modeldat$model_weights  <- weights(baseline)
+    #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+    
+    call <- as.character(getCall(baseline))
+    
+    weight_name <- call[length(call)]
+    
+    names(modeldat)[length(names(modeldat))] <- weight_name
+    
   }
+  # if (is.null(weights(baseline)) == FALSE){
+  #   if (class(baseline)[1] == "glm" && sum(weights(baseline)) == nrow(model.frame(baseline)) || attr(class(baseline), "package") == "lme4" && sum(weights(baseline)) == nrow(model.frame(baseline))){
+  #   } else {
+  #     
+  #     modeldat$model_weights  <- weights(baseline)
+  #     #baseline <- update(baseline, yvar~., weights = model_weights, data = modeldat)
+  #     
+  #     call <- as.character(getCall(baseline))
+  #     
+  #     weight_name <- call[length(call)]
+  #     
+  #     names(modeldat)[length(names(modeldat))] <- weight_name
+  #     
+  #   }
+  # }
   
   #If using a mixed model, ensure that maximum likelihood is specified (because we are comparing models with different fixed effects)
   if(!is.null(attr(class(baseline), "package")) && attr(class(baseline), "package") == "lme4" && class(baseline)[1] == "lmerMod" && baseline@resp$REML == 1){
@@ -935,5 +957,13 @@ singlewin <- function(xvar, cdate, bdate, baseline,
     LocalBestModel <- update(modeloutput, .~., data = modeldat)
   }
   LocalData <- model.frame(LocalBestModel)
+  
+  #If we changed scipen at the start, switch it back to default
+  if(exists("current_option")){
+    
+    options(scipen = current_option)
+    
+  }
+  
   return(list(BestModel = LocalBestModel, BestModelData = LocalData, Dataset = data.frame(ModelAICc = AICc(LocalBestModel), deltaAICc = AICc(LocalBestModel) - nullmodel, WindowOpen = range[1], WindowClose = range[2], Function = func)))
 }
