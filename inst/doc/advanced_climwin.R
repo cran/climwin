@@ -1,9 +1,9 @@
-## ---- eval = F-----------------------------------------------------------
+## ---- eval = F----------------------------------------------------------------
 #  
 #  Mass$climate <- 1
 #  
 
-## ---- eval = F-----------------------------------------------------------
+## ---- eval = F----------------------------------------------------------------
 #  
 #  Interaction <- slidingwin(xvar = list(Temp = MassClimate$Temp),
 #                            cdate = MassClimate$Date,
@@ -16,12 +16,12 @@
 #                            func = "lin")
 #  
 
-## ---- eval = F-----------------------------------------------------------
+## ---- eval = F----------------------------------------------------------------
 #  
 #  summary(Interaction[[1]]$BestModel)
 #  
 
-## ---- eval = F-----------------------------------------------------------
+## ---- eval = F----------------------------------------------------------------
 #  
 #  Call:
 #  lm(formula = yvar ~ climate + Age + climate:Age, data = modeldat)
@@ -37,19 +37,19 @@
 #  Age          -2.6046     2.6603  -0.979    0.333
 #  climate:Age   0.4024     0.3395   1.185    0.242
 #  ---
-#  Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+#  Signif. codes:  0 â€˜***â€™ 0.001 â€˜**â€™ 0.01 â€˜*â€™ 0.05 â€˜.â€™ 0.1 â€˜ â€™ 1
 #  
 #  Residual standard error: 2.449 on 43 degrees of freedom
 #  Multiple R-squared:  0.7778,	Adjusted R-squared:  0.7623
 #  F-statistic: 50.17 on 3 and 43 DF,  p-value: 4.267e-14
 #  
 
-## ----message = FALSE-----------------------------------------------------
+## ----message = FALSE----------------------------------------------------------
 
 library(climwin)
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  
 #  MassWin <- slidingwin(xvar = list(Temp = MassClimate$Temp),
 #                        cdate = MassClimate$Date,
@@ -63,12 +63,12 @@ library(climwin)
 #                        func = "lin")
 #  
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  
 #  head(MassWin[[1]]$BestModelData)
 #  
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  
 #  SizeWin <- slidingwin(xvar = list(Temp = SizeClimate$Temperature),
 #                        cdate = SizeClimate$Date,
@@ -82,7 +82,7 @@ library(climwin)
 #                        func = "lin")
 #  
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  
 #  MassWin <- slidingwin(xvar = list(Temp = Climate$Temp),
 #                        cdate = Climate$Date,
@@ -95,7 +95,7 @@ library(climwin)
 #                        func = "lin", spatial = list(Biol$SiteID, Climate$SiteID))
 #  
 
-## ---- echo = FALSE, fig.width = 5, fig.height = 5------------------------
+## ---- echo = FALSE, fig.width = 5, fig.height = 5-----------------------------
 
 Unweight <- data.frame(Time = seq(0, 100, 1), Weight = c(rep(0, times = 25), rep(1, times = 50), rep(0, 26)))
 Unweight$Weight <- Unweight$Weight/sum(Unweight$Weight)
@@ -110,7 +110,7 @@ axis(1, cex.axis = 1.5, cex.lab = 1.25, xaxp = c(0, 100, 2),
      mgp = c(2, 1.5, 0))
 
 
-## ---- echo = FALSE, fig.width = 8, fig.height = 4------------------------
+## ---- echo = FALSE, fig.width = 8, fig.height = 4-----------------------------
 
 par(mfrow = c(1, 2))
 duration <- 365
@@ -123,7 +123,7 @@ weight <- evd::dgev(k[1:duration], loc = 1, scale = 2, shape = -1, log = FALSE)
 plot((weight / sum(weight)), type = "l", ylab = "Weight", xlab = "Day", cex.lab = 1.5, cex.axis = 1.5, main = "GEV distribution")
 
 
-## ---- eval = FALSE-------------------------------------------------------
+## ---- eval = FALSE------------------------------------------------------------
 #  
 #  set.seed(100)
 #  
@@ -137,17 +137,17 @@ plot((weight / sum(weight)), type = "l", ylab = "Weight", xlab = "Day", cex.lab 
 #                      par = c(3, 0.2, 0))
 #  
 
-## ---- eval = F-----------------------------------------------------------
+## ---- eval = F----------------------------------------------------------------
 #  
 #  weight$iterations
 #  
 
-## ---- eval = F-----------------------------------------------------------
+## ---- eval = F----------------------------------------------------------------
 #  
 #  weight[[1]]$WeightedOutput
 #  
 
-## ---- echo = FALSE, fig.width = 5, fig.height = 5------------------------
+## ---- echo = FALSE, fig.width = 5, fig.height = 5-----------------------------
 
 explore(weightfunc = "W", shape = 2.17, scale = 0.35, loc = 0)
 

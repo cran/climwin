@@ -1,45 +1,59 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Liam D. Bailey and Martijn van de Pol" />
 
-<meta name="date" content="2019-06-15" />
+<meta name="date" content="2020-05-26" />
 
 <title>Advanced climwin</title>
 
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
 
 
 <style type="text/css">code{white-space: pre;}</style>
 <style type="text/css" data-origin="pandoc">
-a.sourceLine { display: inline-block; line-height: 1.25; }
-a.sourceLine { pointer-events: none; color: inherit; text-decoration: inherit; }
-a.sourceLine:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-a.sourceLine { text-indent: -1em; padding-left: 1em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
-pre.numberSource a.sourceLine
-  { position: relative; left: -4em; }
-pre.numberSource a.sourceLine::before
-  { content: attr(title);
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
     position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; pointer-events: all; display: inline-block;
+    border: none; display: inline-block;
     -webkit-touch-callout: none; -webkit-user-select: none;
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
@@ -48,9 +62,9 @@ pre.numberSource a.sourceLine::before
   }
 pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
 div.sourceCode
-  {  }
+  {   }
 @media screen {
-a.sourceLine::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 code span.al { color: #ff0000; font-weight: bold; } /* Alert */
 code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
@@ -96,7 +110,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
       if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' || rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -117,9 +131,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -288,8 +299,12 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
+
+
+
 
 </head>
 
@@ -299,8 +314,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 
 <h1 class="title toc-ignore">Advanced climwin</h1>
-<h4 class="author"><em>Liam D. Bailey and Martijn van de Pol</em></h4>
-<h4 class="date"><em>2019-06-15</em></h4>
+<h4 class="author">Liam D. Bailey and Martijn van de Pol</h4>
+<h4 class="date">2020-05-26</h4>
 
 
 
@@ -321,40 +336,40 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>Until now, we have assumed that the effects of climate do not interact with any other variables. This may not always be the case. As of v1.1.0, users can build a custom model structure with the ability to include interactions between climate and other variables. In our example using the Mass dataset, we might expect the effect of temperature on chick mass to vary with the average age of the mothers.</p>
 <p>Firstly, it is necessary to create a variable called ‘climate’ in the biological dataset. The variable ‘climate’ doesn’t need to contain any information, it is simply a placeholder to specify where climate data will be included in the model.</p>
 <p><em>NOTE: It is necessary to call the new object ‘climate’ so that <code>climwin</code> can distinguish this variable from others. Other variable names will not work.</em></p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1">Mass<span class="op">$</span>climate &lt;-<span class="st"> </span><span class="dv">1</span></a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>Mass<span class="op">$</span>climate &lt;-<span class="st"> </span><span class="dv">1</span></span></code></pre></div>
 <p>Now that we have our ‘climate’ variable, we can add it into our baseline model. We can then specify how we want our climatic data to interact with other variables in the model.</p>
 <p><code>baseline = lm(Mass ~ climate*Age, data = Mass)</code></p>
 <p>In this example, climatic data from each tested climate window will be included in the model interacting with parent age.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" title="1">Interaction &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate<span class="op">$</span>Temp),</a>
-<a class="sourceLine" id="cb2-2" title="2">                          <span class="dt">cdate =</span> MassClimate<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb2-3" title="3">                          <span class="dt">bdate =</span> Mass<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb2-4" title="4">                          <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span>climate<span class="op">*</span>Age, <span class="dt">data =</span> Mass),</a>
-<a class="sourceLine" id="cb2-5" title="5">                          <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</a>
-<a class="sourceLine" id="cb2-6" title="6">                          <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</a>
-<a class="sourceLine" id="cb2-7" title="7">                          <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),</a>
-<a class="sourceLine" id="cb2-8" title="8">                          <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,</a>
-<a class="sourceLine" id="cb2-9" title="9">                          <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>Interaction &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate<span class="op">$</span>Temp),</span>
+<span id="cb2-2"><a href="#cb2-2"></a>                          <span class="dt">cdate =</span> MassClimate<span class="op">$</span>Date,</span>
+<span id="cb2-3"><a href="#cb2-3"></a>                          <span class="dt">bdate =</span> Mass<span class="op">$</span>Date,</span>
+<span id="cb2-4"><a href="#cb2-4"></a>                          <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span>climate<span class="op">*</span>Age, <span class="dt">data =</span> Mass),</span>
+<span id="cb2-5"><a href="#cb2-5"></a>                          <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</span>
+<span id="cb2-6"><a href="#cb2-6"></a>                          <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</span>
+<span id="cb2-7"><a href="#cb2-7"></a>                          <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),</span>
+<span id="cb2-8"><a href="#cb2-8"></a>                          <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb2-9"><a href="#cb2-9"></a>                          <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</span></code></pre></div>
 <p>If we look at the best model from this analysis, we can see the interaction between temperature and age included in the model coefficients.</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" title="1"><span class="kw">summary</span>(Interaction[[<span class="dv">1</span>]]<span class="op">$</span>BestModel)</a></code></pre></div>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">Call<span class="op">:</span></a>
-<a class="sourceLine" id="cb4-2" title="2"><span class="kw">lm</span>(<span class="dt">formula =</span> yvar <span class="op">~</span><span class="st"> </span>climate <span class="op">+</span><span class="st"> </span>Age <span class="op">+</span><span class="st"> </span>climate<span class="op">:</span>Age, <span class="dt">data =</span> modeldat)</a>
-<a class="sourceLine" id="cb4-3" title="3"></a>
-<a class="sourceLine" id="cb4-4" title="4">Residuals<span class="op">:</span></a>
-<a class="sourceLine" id="cb4-5" title="5"><span class="st">    </span>Min      1Q  Median      3Q     Max </a>
-<a class="sourceLine" id="cb4-6" title="6"><span class="fl">-5.6266</span> <span class="fl">-1.5716</span>  <span class="fl">0.2878</span>  <span class="fl">1.6086</span>  <span class="fl">4.7510</span> </a>
-<a class="sourceLine" id="cb4-7" title="7"></a>
-<a class="sourceLine" id="cb4-8" title="8">Coefficients<span class="op">:</span></a>
-<a class="sourceLine" id="cb4-9" title="9"><span class="st">            </span>Estimate Std. Error t value <span class="kw">Pr</span>(<span class="op">&gt;</span><span class="er">|</span>t<span class="op">|</span>)    </a>
-<a class="sourceLine" id="cb4-10" title="10">(Intercept) <span class="fl">170.2628</span>     <span class="fl">7.1678</span>  <span class="fl">23.754</span>  <span class="op">&lt;</span><span class="st"> </span><span class="fl">2e-16</span> <span class="op">**</span><span class="er">*</span></a>
-<a class="sourceLine" id="cb4-11" title="11">climate      <span class="fl">-5.5466</span>     <span class="fl">0.9200</span>  <span class="fl">-6.029</span> <span class="fl">3.32e-07</span> <span class="op">**</span><span class="er">*</span></a>
-<a class="sourceLine" id="cb4-12" title="12">Age          <span class="fl">-2.6046</span>     <span class="fl">2.6603</span>  <span class="fl">-0.979</span>    <span class="fl">0.333</span>    </a>
-<a class="sourceLine" id="cb4-13" title="13">climate<span class="op">:</span>Age   <span class="fl">0.4024</span>     <span class="fl">0.3395</span>   <span class="fl">1.185</span>    <span class="fl">0.242</span>    </a>
-<a class="sourceLine" id="cb4-14" title="14"><span class="op">---</span></a>
-<a class="sourceLine" id="cb4-15" title="15">Signif. codes<span class="op">:</span><span class="st">  </span><span class="dv">0</span> ‘<span class="op">**</span><span class="er">*</span>’ <span class="fl">0.001</span> ‘<span class="op">**</span>’ <span class="fl">0.01</span> ‘<span class="op">*</span>’ <span class="fl">0.05</span> ‘.’ <span class="fl">0.1</span> ‘ ’ <span class="dv">1</span></a>
-<a class="sourceLine" id="cb4-16" title="16"></a>
-<a class="sourceLine" id="cb4-17" title="17">Residual standard error<span class="op">:</span><span class="st"> </span><span class="fl">2.449</span> on <span class="dv">43</span> degrees of freedom</a>
-<a class="sourceLine" id="cb4-18" title="18">Multiple R<span class="op">-</span>squared<span class="op">:</span><span class="st">  </span><span class="fl">0.7778</span>,    Adjusted R<span class="op">-</span>squared<span class="op">:</span><span class="st">  </span><span class="fl">0.7623</span> </a>
-<a class="sourceLine" id="cb4-19" title="19">F<span class="op">-</span>statistic<span class="op">:</span><span class="st"> </span><span class="fl">50.17</span> on <span class="dv">3</span> and <span class="dv">43</span> DF,  p<span class="op">-</span>value<span class="op">:</span><span class="st"> </span><span class="fl">4.267e-14</span></a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw">summary</span>(Interaction[[<span class="dv">1</span>]]<span class="op">$</span>BestModel)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>Call<span class="op">:</span></span>
+<span id="cb4-2"><a href="#cb4-2"></a><span class="kw">lm</span>(<span class="dt">formula =</span> yvar <span class="op">~</span><span class="st"> </span>climate <span class="op">+</span><span class="st"> </span>Age <span class="op">+</span><span class="st"> </span>climate<span class="op">:</span>Age, <span class="dt">data =</span> modeldat)</span>
+<span id="cb4-3"><a href="#cb4-3"></a></span>
+<span id="cb4-4"><a href="#cb4-4"></a>Residuals<span class="op">:</span></span>
+<span id="cb4-5"><a href="#cb4-5"></a><span class="st">    </span>Min      1Q  Median      3Q     Max </span>
+<span id="cb4-6"><a href="#cb4-6"></a><span class="fl">-5.6266</span> <span class="fl">-1.5716</span>  <span class="fl">0.2878</span>  <span class="fl">1.6086</span>  <span class="fl">4.7510</span> </span>
+<span id="cb4-7"><a href="#cb4-7"></a></span>
+<span id="cb4-8"><a href="#cb4-8"></a>Coefficients<span class="op">:</span></span>
+<span id="cb4-9"><a href="#cb4-9"></a><span class="st">            </span>Estimate Std. Error t value <span class="kw">Pr</span>(<span class="op">&gt;</span><span class="er">|</span>t<span class="op">|</span>)    </span>
+<span id="cb4-10"><a href="#cb4-10"></a>(Intercept) <span class="fl">170.2628</span>     <span class="fl">7.1678</span>  <span class="fl">23.754</span>  <span class="op">&lt;</span><span class="st"> </span><span class="fl">2e-16</span> <span class="op">**</span><span class="er">*</span></span>
+<span id="cb4-11"><a href="#cb4-11"></a>climate      <span class="fl">-5.5466</span>     <span class="fl">0.9200</span>  <span class="fl">-6.029</span> <span class="fl">3.32e-07</span> <span class="op">**</span><span class="er">*</span></span>
+<span id="cb4-12"><a href="#cb4-12"></a>Age          <span class="fl">-2.6046</span>     <span class="fl">2.6603</span>  <span class="fl">-0.979</span>    <span class="fl">0.333</span>    </span>
+<span id="cb4-13"><a href="#cb4-13"></a>climate<span class="op">:</span>Age   <span class="fl">0.4024</span>     <span class="fl">0.3395</span>   <span class="fl">1.185</span>    <span class="fl">0.242</span>    </span>
+<span id="cb4-14"><a href="#cb4-14"></a><span class="op">---</span></span>
+<span id="cb4-15"><a href="#cb4-15"></a>Signif. codes<span class="op">:</span><span class="st">  </span><span class="dv">0</span> ‘<span class="op">**</span><span class="er">*</span>’ <span class="fl">0.001</span> ‘<span class="op">**</span>’ <span class="fl">0.01</span> ‘<span class="op">*</span>’ <span class="fl">0.05</span> ‘.’ <span class="fl">0.1</span> ‘ ’ <span class="dv">1</span></span>
+<span id="cb4-16"><a href="#cb4-16"></a></span>
+<span id="cb4-17"><a href="#cb4-17"></a>Residual standard error<span class="op">:</span><span class="st"> </span><span class="fl">2.449</span> on <span class="dv">43</span> degrees of freedom</span>
+<span id="cb4-18"><a href="#cb4-18"></a>Multiple R<span class="op">-</span>squared<span class="op">:</span><span class="st">  </span><span class="fl">0.7778</span>,    Adjusted R<span class="op">-</span>squared<span class="op">:</span><span class="st">  </span><span class="fl">0.7623</span> </span>
+<span id="cb4-19"><a href="#cb4-19"></a>F<span class="op">-</span>statistic<span class="op">:</span><span class="st"> </span><span class="fl">50.17</span> on <span class="dv">3</span> and <span class="dv">43</span> DF,  p<span class="op">-</span>value<span class="op">:</span><span class="st"> </span><span class="fl">4.267e-14</span></span></code></pre></div>
 </div>
 <div id="mixed-effects-models" class="section level3">
 <h3>Mixed effects models</h3>
@@ -547,19 +562,19 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>Below we will provide a worked example using the <code>Mass</code> and <code>MassClimate</code> dataset. In this example, lets imagine we are interested in testing the impact of the number of days above freezing on our mass response variable. To do this we would set both our ‘upper’ and ‘binary’ parameters.</p>
 <p><code>upper = 0</code> <code>binary = TRUE</code></p>
 <p>As we are interested in measuring the <em>number</em> of days above freezing, we set our stat parameter to ‘sum’. Otherwise, we used model parameter values identical to our earlier vignette.</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" title="1"><span class="kw">library</span>(climwin)</a></code></pre></div>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" title="1">MassWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate<span class="op">$</span>Temp),</a>
-<a class="sourceLine" id="cb6-2" title="2">                      <span class="dt">cdate =</span> MassClimate<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb6-3" title="3">                      <span class="dt">bdate =</span> Mass<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb6-4" title="4">                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Mass),</a>
-<a class="sourceLine" id="cb6-5" title="5">                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</a>
-<a class="sourceLine" id="cb6-6" title="6">                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</a>
-<a class="sourceLine" id="cb6-7" title="7">                      <span class="dt">upper =</span> <span class="dv">0</span>, <span class="dt">binary =</span> <span class="ot">TRUE</span>,</a>
-<a class="sourceLine" id="cb6-8" title="8">                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),</a>
-<a class="sourceLine" id="cb6-9" title="9">                      <span class="dt">stat =</span> <span class="st">&quot;sum&quot;</span>,</a>
-<a class="sourceLine" id="cb6-10" title="10">                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="kw">library</span>(climwin)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>MassWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate<span class="op">$</span>Temp),</span>
+<span id="cb6-2"><a href="#cb6-2"></a>                      <span class="dt">cdate =</span> MassClimate<span class="op">$</span>Date,</span>
+<span id="cb6-3"><a href="#cb6-3"></a>                      <span class="dt">bdate =</span> Mass<span class="op">$</span>Date,</span>
+<span id="cb6-4"><a href="#cb6-4"></a>                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Mass),</span>
+<span id="cb6-5"><a href="#cb6-5"></a>                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</span>
+<span id="cb6-6"><a href="#cb6-6"></a>                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</span>
+<span id="cb6-7"><a href="#cb6-7"></a>                      <span class="dt">upper =</span> <span class="dv">0</span>, <span class="dt">binary =</span> <span class="ot">TRUE</span>,</span>
+<span id="cb6-8"><a href="#cb6-8"></a>                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),</span>
+<span id="cb6-9"><a href="#cb6-9"></a>                      <span class="dt">stat =</span> <span class="st">&quot;sum&quot;</span>,</span>
+<span id="cb6-10"><a href="#cb6-10"></a>                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</span></code></pre></div>
 <p>When we examine the best model data, we can see that our climate data is now count data.</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" title="1"><span class="kw">head</span>(MassWin[[<span class="dv">1</span>]]<span class="op">$</span>BestModelData)</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw">head</span>(MassWin[[<span class="dv">1</span>]]<span class="op">$</span>BestModelData)</span></code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -678,16 +693,16 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </tbody>
 </table>
 <p>Some example code showing how the ‘cohort’ argument can be used is provided below. In this example we use data from a southern hemisphere breeding bird.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" title="1">SizeWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> SizeClimate<span class="op">$</span>Temperature),</a>
-<a class="sourceLine" id="cb8-2" title="2">                      <span class="dt">cdate =</span> SizeClimate<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb8-3" title="3">                      <span class="dt">bdate =</span> Size<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb8-4" title="4">                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Size <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Size),</a>
-<a class="sourceLine" id="cb8-5" title="5">                      <span class="dt">cohort =</span> Size<span class="op">$</span>Cohort,</a>
-<a class="sourceLine" id="cb8-6" title="6">                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</a>
-<a class="sourceLine" id="cb8-7" title="7">                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</a>
-<a class="sourceLine" id="cb8-8" title="8">                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">01</span>, <span class="dv">10</span>),</a>
-<a class="sourceLine" id="cb8-9" title="9">                      <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,</a>
-<a class="sourceLine" id="cb8-10" title="10">                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a>SizeWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> SizeClimate<span class="op">$</span>Temperature),</span>
+<span id="cb8-2"><a href="#cb8-2"></a>                      <span class="dt">cdate =</span> SizeClimate<span class="op">$</span>Date,</span>
+<span id="cb8-3"><a href="#cb8-3"></a>                      <span class="dt">bdate =</span> Size<span class="op">$</span>Date,</span>
+<span id="cb8-4"><a href="#cb8-4"></a>                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Size <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Size),</span>
+<span id="cb8-5"><a href="#cb8-5"></a>                      <span class="dt">cohort =</span> Size<span class="op">$</span>Cohort,</span>
+<span id="cb8-6"><a href="#cb8-6"></a>                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</span>
+<span id="cb8-7"><a href="#cb8-7"></a>                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</span>
+<span id="cb8-8"><a href="#cb8-8"></a>                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">01</span>, <span class="dv">10</span>),</span>
+<span id="cb8-9"><a href="#cb8-9"></a>                      <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb8-10"><a href="#cb8-10"></a>                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>)</span></code></pre></div>
 <hr />
 </div>
 <div id="spatial-replication" class="section level2">
@@ -826,15 +841,15 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </table>
 <p><em>NOTE: The climate dataset for spatially replicated <code>climwin</code> analysis will often include duplicate dates. In a regular <code>climwin</code> analysis this will lead to errors.</em></p>
 <p>With these new datasets, we can carry out a <code>slidingwin</code> analysis with the addition of a ‘spatial’ parameter.</p>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" title="1">MassWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> Climate<span class="op">$</span>Temp),</a>
-<a class="sourceLine" id="cb9-2" title="2">                      <span class="dt">cdate =</span> Climate<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb9-3" title="3">                      <span class="dt">bdate =</span> Biol<span class="op">$</span>Date,</a>
-<a class="sourceLine" id="cb9-4" title="4">                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Biol),</a>
-<a class="sourceLine" id="cb9-5" title="5">                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</a>
-<a class="sourceLine" id="cb9-6" title="6">                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</a>
-<a class="sourceLine" id="cb9-7" title="7">                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),</a>
-<a class="sourceLine" id="cb9-8" title="8">                      <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,</a>
-<a class="sourceLine" id="cb9-9" title="9">                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>, <span class="dt">spatial =</span> <span class="kw">list</span>(Biol<span class="op">$</span>SiteID, Climate<span class="op">$</span>SiteID))</a></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a>MassWin &lt;-<span class="st"> </span><span class="kw">slidingwin</span>(<span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> Climate<span class="op">$</span>Temp),</span>
+<span id="cb9-2"><a href="#cb9-2"></a>                      <span class="dt">cdate =</span> Climate<span class="op">$</span>Date,</span>
+<span id="cb9-3"><a href="#cb9-3"></a>                      <span class="dt">bdate =</span> Biol<span class="op">$</span>Date,</span>
+<span id="cb9-4"><a href="#cb9-4"></a>                      <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Biol),</span>
+<span id="cb9-5"><a href="#cb9-5"></a>                      <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</span>
+<span id="cb9-6"><a href="#cb9-6"></a>                      <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>),</span>
+<span id="cb9-7"><a href="#cb9-7"></a>                      <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">05</span>),</span>
+<span id="cb9-8"><a href="#cb9-8"></a>                      <span class="dt">stat =</span> <span class="st">&quot;mean&quot;</span>,</span>
+<span id="cb9-9"><a href="#cb9-9"></a>                      <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>, <span class="dt">spatial =</span> <span class="kw">list</span>(Biol<span class="op">$</span>SiteID, Climate<span class="op">$</span>SiteID))</span></code></pre></div>
 <p>The ‘spatial’ parameter is a list item that includes the SiteID variable for the biological and climate datasets respectively. When <code>slidingwin</code> fits individual climate windows, each biological record will be matched with the climate data from the corresponding site.</p>
 <hr />
 </div>
@@ -849,23 +864,23 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="a-worked-example-2" class="section level3">
 <h3>A worked example</h3>
 <p><code>weightwin</code> can often be useful to use with climate data where we have already identified a climate window using <code>slidingwin</code>. Here, we will use <code>weightwin</code> to further investigate the <code>Mass</code> and <code>MassClimate</code> data included with the <code>climwin</code> package.</p>
-<p>The basic parameters in <code>weightwin</code> are the same as <code>slidingwin</code> (though note the abscence of the ‘stat’ parameter). In addition however, we must designate which weight distribution we want to use. In this case we consider a Weibull function.</p>
+<p>The basic parameters in <code>weightwin</code> are the same as <code>slidingwin</code> (though note the absence of the ‘stat’ parameter). In addition however, we must designate which weight distribution we want to use. In this case we consider a Weibull function.</p>
 <p><code>weightfunc = &quot;W&quot;</code></p>
 <p>Next, we must set the location, scale and shape values for the starting distribution that will be used to begin the optimisation procedure. The default values (3, 0.2, 0) are often appropriate for fitting Weibull distributions. However, you can explore different parameter values using the <code>explore</code> function.</p>
 <p>The optimisation function used in <code>weightwin</code> has the potential to get ‘stuck’ during the optimisation routine. With the argument ‘n’ we can run our <code>weightwin</code> analysis multiple times to ensure we are finding the true optimal weight distribution.</p>
 <p><code>n = 5</code></p>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" title="1"><span class="kw">set.seed</span>(<span class="dv">100</span>)</a>
-<a class="sourceLine" id="cb10-2" title="2"></a>
-<a class="sourceLine" id="cb10-3" title="3">weight &lt;-<span class="st"> </span><span class="kw">weightwin</span>(<span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate<span class="op">$</span>Temp), <span class="dt">cdate =</span> MassClimate<span class="op">$</span>Date, </a>
-<a class="sourceLine" id="cb10-4" title="4">                    <span class="dt">bdate =</span> Mass<span class="op">$</span>Date, </a>
-<a class="sourceLine" id="cb10-5" title="5">                    <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Mass), </a>
-<a class="sourceLine" id="cb10-6" title="6">                    <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>), </a>
-<a class="sourceLine" id="cb10-7" title="7">                    <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, </a>
-<a class="sourceLine" id="cb10-8" title="8">                    <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">5</span>), </a>
-<a class="sourceLine" id="cb10-9" title="9">                    <span class="dt">weightfunc =</span> <span class="st">&quot;W&quot;</span>, <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</a>
-<a class="sourceLine" id="cb10-10" title="10">                    <span class="dt">par =</span> <span class="kw">c</span>(<span class="dv">3</span>, <span class="fl">0.2</span>, <span class="dv">0</span>))</a></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="kw">set.seed</span>(<span class="dv">100</span>)</span>
+<span id="cb10-2"><a href="#cb10-2"></a></span>
+<span id="cb10-3"><a href="#cb10-3"></a>weight &lt;-<span class="st"> </span><span class="kw">weightwin</span>(<span class="dt">n =</span> <span class="dv">5</span>, <span class="dt">xvar =</span> <span class="kw">list</span>(<span class="dt">Temp =</span> MassClimate<span class="op">$</span>Temp), <span class="dt">cdate =</span> MassClimate<span class="op">$</span>Date, </span>
+<span id="cb10-4"><a href="#cb10-4"></a>                    <span class="dt">bdate =</span> Mass<span class="op">$</span>Date, </span>
+<span id="cb10-5"><a href="#cb10-5"></a>                    <span class="dt">baseline =</span> <span class="kw">lm</span>(Mass <span class="op">~</span><span class="st"> </span><span class="dv">1</span>, <span class="dt">data =</span> Mass), </span>
+<span id="cb10-6"><a href="#cb10-6"></a>                    <span class="dt">range =</span> <span class="kw">c</span>(<span class="dv">150</span>, <span class="dv">0</span>), </span>
+<span id="cb10-7"><a href="#cb10-7"></a>                    <span class="dt">func =</span> <span class="st">&quot;lin&quot;</span>, <span class="dt">type =</span> <span class="st">&quot;absolute&quot;</span>, </span>
+<span id="cb10-8"><a href="#cb10-8"></a>                    <span class="dt">refday =</span> <span class="kw">c</span>(<span class="dv">20</span>, <span class="dv">5</span>), </span>
+<span id="cb10-9"><a href="#cb10-9"></a>                    <span class="dt">weightfunc =</span> <span class="st">&quot;W&quot;</span>, <span class="dt">cinterval =</span> <span class="st">&quot;day&quot;</span>,</span>
+<span id="cb10-10"><a href="#cb10-10"></a>                    <span class="dt">par =</span> <span class="kw">c</span>(<span class="dv">3</span>, <span class="fl">0.2</span>, <span class="dv">0</span>))</span></code></pre></div>
 <p>If we look at the iterations object in the <code>weightwin</code> output, we can see the outcome of all 5 iterations.</p>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" title="1">weight<span class="op">$</span>iterations</a></code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a>weight<span class="op">$</span>iterations</span></code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -911,7 +926,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p>start_shape, start_scale and start_location show the starting parameters used for each iteration of <code>weightwin</code>. In the deltaAICc column we can see the outcomes of the different iterations. While 4 of the iterations reached the same peak, the 5th got stuck during the optimisation routine. This is a useful demonstration of why multiple iterations are important.</p>
 <p>It seems that there is a clear peak that our optimisation routine has been able to identify, next we can visualise that peak using the <code>explore</code> function.</p>
 <p>We can use the shape, scale and location parameters of the first iteration to fit our plot.</p>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" title="1">weight[[<span class="dv">1</span>]]<span class="op">$</span>WeightedOutput</a></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a>weight[[<span class="dv">1</span>]]<span class="op">$</span>WeightedOutput</span></code></pre></div>
 <table>
 <thead>
 <tr class="header">
@@ -952,7 +967,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <h3>Pros and cons</h3>
 <p><code>weightwin</code> can provide greater detail on the relationship between climate and the biological response, such as the occurrence of exponential functions. Additionally, by using more diverse weight distributions, <code>weightwin</code> will often generate models with better <span class="math inline">\(\Delta AICc\)</span> values, which may be especially important when users are most interested in achieving high explanatory power. Furthermore, by using an optimisation routine <code>weightwin</code> often tests far fewer models than <code>slidingwin</code>, allowing for more rapid analysis.</p>
 <p>Despite these benefits, <code>weightwin</code> will not always be the most appropriate function for all scenarios. Firstly, the nature of the fitted weight distributions means that <code>weightwin</code> can only detect single climate signals, which forces users to detect and compare potential climate signals with separate analyses. This is not an issue using <code>slidingwin</code>.</p>
-<p>Secondly, <code>weightwin</code> can be a more technically complex process. While the above example works easily, in other scenarios the optimisation procedures may often get stuck on false optima or fail to converge. In these cases, users may be required to test different starting parameters and adjust optimisation characteristics such as step size. Often this procedure can be inhibative for users with less technical knowledge.</p>
+<p>Secondly, <code>weightwin</code> can be a more technically complex process. While the above example works easily, in other scenarios the optimisation procedures may often get stuck on false optima or fail to converge. In these cases, users may be required to test different starting parameters and adjust optimisation characteristics such as step size. Often this procedure can be inhibitive for users with less technical knowledge.</p>
 <p>Finally, <code>weightwin</code> can only be used for testing mean climate, with no capacity to consider other aggregate statistics. Therefore, whether one chooses to use <code>weightwin</code> or <code>slidingwin</code> will largely depend on the summary statistic used, the level of detail desired, and the user’s technical knowledge.</p>
 <hr />
 <p>To ask additional questions or report bugs please e-mail:</p>
@@ -961,6 +976,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 </div>
 </div>
 
+
+
+<!-- code folding -->
 
 
 <!-- dynamically load mathjax for compatibility with self-contained -->
