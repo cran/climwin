@@ -1,7 +1,7 @@
 Package: climwin
 Type: Package
 Title: Climate Window Analysis
-Version: 1.2.32
+Version: 1.2.33
 Authors@R: c(person(given = c("Liam", "D."), family = "Bailey",
                         role = c("aut", "cre"),
                         email = "liam.bailey@liamdbailey.com"),
@@ -27,7 +27,7 @@ VignetteBuilder: knitr
 RoxygenNote: 7.3.2
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2025-08-25 20:09:35 UTC; liam
+Packaged: 2026-03-01 20:26:02 UTC; liam
 Author: Liam D. Bailey [aut, cre],
   Martijn van de Pol [aut]
-Date/Publication: 2025-08-25 21:50:02 UTC
+Date/Publication: 2026-03-01 23:40:02 UTC

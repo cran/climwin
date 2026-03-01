@@ -1,6 +1,6 @@
-b9f7a603bd326ba5f4c00b14d4fa1394 *DESCRIPTION
+855d2576df0135d69a50ad0912da6323 *DESCRIPTION
 f75aee62362deacb64ce14eb6c08607a *NAMESPACE
-7a981dc2619244c1c1cd8d971b5cc0d5 *NEWS.md
+353f9f0120c8aaa0720a3ce7a600cc5d *NEWS.md
 f3ad390339bc1c2e3645c7b8a88d36ad *R/autowin.R
 c4b4901a628537e8c318cdc44f43d0fb *R/crosswin.R
 1bb5d527b0f744584844794ffc2c8d42 *R/datasets.R
@@ -25,7 +25,7 @@ b35469edb25e23c0478f27c8fc85b110 *R/slidingwin.R
 88dfa1d76eace6662ca244dbbceabb15 *R/wgmean.R
 60891bbfd0da91c720be40bedc339239 *R/zzz.R
 dd1b85e930eda7fba42a224400307614 *README.md
-19ecdf2cb800019faaed55ca86246b81 *build/vignette.rds
+5eddd0dd43a65691f1824f7d59ee0d49 *build/vignette.rds
 7f67b614dc099318236f93cb3e9d234d *data/Chaff.rda
 c9ea28ebe569c881abc4d258d65d5aba *data/ChaffClim.rda
 5f8a075ea39430a546cb774ffc863315 *data/Mass.rda
@@ -40,10 +40,10 @@ c73cd26a7c95107feb5c0d30b8fcf1df *data/SizeClimate.rda
 cd775b13c3c446bbac0f268f71bc21cb *inst/CITATION
 acebec2a487f69a7fa38020d34ec6033 *inst/doc/advanced_climwin.R
 7b048bf03cae955616e696d391a11a8c *inst/doc/advanced_climwin.Rmd
-7c917638d40ffca0e3f8243a5dcf3cce *inst/doc/advanced_climwin.html
+c382895ebab79dd4ac76e41bdede32d3 *inst/doc/advanced_climwin.html
 1166177e67bc108fa80b626c599ba450 *inst/doc/climwin.R
 2039c24e3cae9e4496043abb57d2d1cd *inst/doc/climwin.Rmd
-704aab9fe1eb7c8032eaa1114d4b6b9b *inst/doc/climwin.html
+e716512b7389efd0f4e583a6e31d0c94 *inst/doc/climwin.html
 3cd4b33a7c3b0a1399cb9e4ce85e8025 *man/Chaff.Rd
 2eb94c881300322b4ae1b9adf6ceb645 *man/ChaffClim.Rd
 a1ead5c6621dd7c4f741a4f473d33914 *man/Mass.Rd
@@ -90,7 +90,7 @@ e4e050edf01b9eae6e4c52b9891629fd *tests/testthat/testplotcor.R
 df749a0c58ad18c256cb478d3c86428f *tests/testthat/testplothist.R
 c54bf313cf1d2153b417b8c3ce5d8a8e *tests/testthat/testplotweights.R
 148518d39764505f4130d8b2b30c08ac *tests/testthat/testplotwin.R
-46106d29307016988ce0013bda4df126 *tests/testthat/testpvalue.R
+444a61d27ee20392c54387bd40710ab7 *tests/testthat/testpvalue.R
 1b65f63ff17cc2db4b41970b991834c6 *tests/testthat/testrandwin.R
 90247c97fbf9b73ae568c649c660ad27 *tests/testthat/testsinglewin.R
 b2ea99169f736f408ff89fdd84e04353 *tests/testthat/testslidingwin.R
